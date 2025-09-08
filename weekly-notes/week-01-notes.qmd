@@ -4,8 +4,7 @@ date: "2025-09-08"
 ---
 
 ## Key Concepts Learned
-- [List main concepts from lecture]
-- [Technical skills covered]
+- Foundational language in R
 
 ## Coding Techniques
 - [New R functions or approaches]
