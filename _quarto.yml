@@ -3,7 +3,7 @@ project:
   output-dir: docs
 
 website:
-  title: "Luciano - MUSA 5080 Portfolio"
+  title: "Luciano Lu - MUSA 5080 Portfolio"
   navbar:
     left:
       - href: index.qmd
