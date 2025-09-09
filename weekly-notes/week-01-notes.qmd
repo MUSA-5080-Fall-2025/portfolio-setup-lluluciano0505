@@ -4,19 +4,24 @@ date: "2025-09-08"
 ---
 
 ## Key Concepts Learned
-- Foundational language in R
+- GitHub, Quarto, R, RStudio Projects
+- Git fundamentals: repo, commit, push, pull
+- tidyverse & dplyr basics: select(), filter(), mutate(), group_by(), summarize(), pipes (%>%)
 
 ## Coding Techniques
-- [New R functions or approaches]
-- [Quarto features learned]
+- Used the Terminal in RStudio to type quarto render and build the portfolio website locally
+- Noticed how Git is integrated in RStudio: I can see changes, commit, and then push through GitHub Desktop
+- Practiced using dplyr functions like select(), filter(), and mutate() to work with datasets
+- Learned that group_by() and summarize() go together — group prepares the data, summarize gives the actual stats
+- Started using the pipe operator %>%, which makes the code read like a story (“take this, then do that…”)
 
 ## Questions & Challenges
-- [What I didn't fully understand]
-- [Areas needing more practice]
+- YAML formatting is pretty strict, I used Chatgpt to help fix my mistakes
+- The Git workflow still feels a bit confusing, not always sure when to pull and when to push
 
 ## Connections to Policy
-- [How this week's content applies to real policy work]
+- Not Yet
 
 ## Reflection
-- [What was most interesting]
-- [How I'll apply this knowledge]
+- Learned how to set up a portfolio website using Quarto and GitHub
+- Got familiar with basic Git commands and workflow
