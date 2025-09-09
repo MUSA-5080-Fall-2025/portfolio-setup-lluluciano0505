@@ -4,7 +4,7 @@ project:
 
 website:
   title: "Luciano Lu - MUSA 5080 Portfolio"
-  navbar:
+  navbar:quarto
     left:
       - href: index.qmd
         text: Home
