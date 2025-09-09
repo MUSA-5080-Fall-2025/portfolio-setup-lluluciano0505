@@ -15,8 +15,8 @@ Advanced spatial analysis and data science for urban planning and public policy.
 - **Final Project:** Capstone modeling challenge
 
 ## About Me
-Hi I am Luciano. Welcome to my musa page.
+Hi I am Luciano. Welcome to my portfolio page.
 
 ## Contact
 - Email: lu25@upenn.edu
-- GitHub: Luciano
+- GitHub: lluluciano0505
