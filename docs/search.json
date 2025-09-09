@@ -18,7 +18,7 @@
     "href": "weekly-notes/week-01-notes.html#coding-techniques",
     "title": "Week 1 Notes - Course Introduction",
     "section": "Coding Techniques",
-    "text": "Coding Techniques\n\nUsed the Terminal in RStudio to type quarto render and build the portfolio website locally\nNoticed how Git is integrated in RStudio: I can see changes, commit, and then push through GitHub Desktop\nPracticed using dplyr functions like select(), filter(), and mutate() to work with datasets\nLearned that group_by() and summarize() go together — group prepares the data, summarize gives the actual stats\nStarted using the pipe operator %&gt;%, which makes the code read like a story (“take this, then do that…”)"
+    "text": "Coding Techniques\n\nUsed the Terminal in RStudio to type quarto render and build the portfolio website locally\nNoticed how Git is integrated in RStudio: see changes, commit, and then push through GitHub Desktop\nPracticed using dplyr functions like select(), filter(), and mutate()\nLearned that group_by() and summarize() go together — group prepares the data, summarize gives the actual stats\nStarted using the pipe operator %&gt;% (“take this, then do that…”)"
   },
   {
     "objectID": "weekly-notes/week-01-notes.html#questions-challenges",

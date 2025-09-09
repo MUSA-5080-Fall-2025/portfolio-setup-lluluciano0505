@@ -10,10 +10,10 @@ date: "2025-09-08"
 
 ## Coding Techniques
 - Used the Terminal in RStudio to type quarto render and build the portfolio website locally
-- Noticed how Git is integrated in RStudio: I can see changes, commit, and then push through GitHub Desktop
-- Practiced using dplyr functions like select(), filter(), and mutate() to work with datasets
+- Noticed how Git is integrated in RStudio: see changes, commit, and then push through GitHub Desktop
+- Practiced using dplyr functions like select(), filter(), and mutate()
 - Learned that group_by() and summarize() go together — group prepares the data, summarize gives the actual stats
-- Started using the pipe operator %>%, which makes the code read like a story (“take this, then do that…”)
+- Started using the pipe operator %>% (“take this, then do that…”)
 
 ## Questions & Challenges
 - YAML formatting is pretty strict, I used Chatgpt to help fix my mistakes
