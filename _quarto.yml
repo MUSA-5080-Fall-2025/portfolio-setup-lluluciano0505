@@ -4,12 +4,14 @@ project:
 
 website:
   title: "Luciano Lu - MUSA 5080 Portfolio"
-  navbar:quarto
+  navbar:
     left:
       - href: index.qmd
         text: Home
-      - href: weekly-notes/
-        text: Weekly Notes
+      - text: Weekly Notes
+        menu:
+          - href: weekly-notes/week-01-notes.qmd
+            text: Week 1
 
 format:
   html:
@@ -20,6 +22,3 @@ format:
 execute:
   freeze: auto
 
-project:
-  type: website
-  output-dir: docs
