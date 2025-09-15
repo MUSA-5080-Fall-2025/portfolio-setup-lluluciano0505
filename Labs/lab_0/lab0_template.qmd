@@ -1,7 +1,7 @@
 ---
 title: "Lab 0: Getting Started with dplyr"
-subtitle: "Your First Data Analysis"
-author: "Your Name Here"
+subtitle: "First Data Analysis"
+author: "Luciano"
 date: today
 format: 
   html:
