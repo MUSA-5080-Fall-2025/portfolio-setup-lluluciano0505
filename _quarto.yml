@@ -9,10 +9,13 @@ website:
       - href: index.qmd
         text: Home
       - text: Weekly Notes
-      - text: Labs
         menu:
           - href: weekly-notes/week-01-notes.qmd
             text: Week 1
+      - text: Labs
+        menu:
+          - href: Labs/lab_0/lab0_template.qmd
+            text: Lab 0
 
 format:
   html:
