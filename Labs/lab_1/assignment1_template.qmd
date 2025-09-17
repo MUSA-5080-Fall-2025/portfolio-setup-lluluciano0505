@@ -18,7 +18,7 @@ execute:
 
 ## Scenario
 
-You are a data analyst for the **[Your State] Department of Human Services**. The department is considering implementing an algorithmic system to identify communities that should receive priority for social service funding and outreach programs. Your supervisor has asked you to evaluate the quality and reliability of available census data to inform this decision.
+You are a data analyst for the **Missouri Department of Human Services**. The department is considering implementing an algorithmic system to identify communities that should receive priority for social service funding and outreach programs. Your supervisor has asked you to evaluate the quality and reliability of available census data to inform this decision.
 
 Drawing on our Week 2 discussion of algorithmic bias, you need to assess not just what the data shows, but how reliable it is and what communities might be affected by data quality issues.
 
@@ -43,7 +43,7 @@ Create this assignment in your portfolio repository under an `assignments/assign
 ```
 - text: Assignments
   menu:
-    - href: assignments/assignment_1/your_file_name.qmd
+    - href: assignments/assignment_1/assignment_1.qmd
       text: "Assignment 1: Census Data Exploration"
 ```
 If there is a special character like comma, you need use double quote mark so that the quarto can identify this as text
@@ -51,14 +51,20 @@ If there is a special character like comma, you need use double quote mark so th
 # Setup
 
 ```{r setup}
-# Load required packages (hint: you need tidycensus, tidyverse, and knitr)
+# Load required packages
+library(tidycensus)
+library(tidyverse)
+library(knitr)
 
 # Set your Census API key
+census_api_key("b236a5b2547ce79c3e203c3e1366ed7fa7b3d463", install = FALSE)
+Sys.getenv("CENSUS_API_KEY")
 
-# Choose your state for analysis - assign it to a variable called my_state
+# Choose your state for analysis
+my_state <- "Missouri"
 ```
 
-**State Selection:** I have chosen **[Your State Name]** for this analysis because: [Brief explanation of why you chose this state]
+**State Selection:** I have chosen **Missouri** for this analysis because: major metropolitan areas (like St. Louis and Kansas City) with a large number of rural counties. This scenario can help to illustrate how data quality may vary between urban and rural areas, which is important for equitable policy decisions.
 
 # Part 2: County-Level Resource Assessment
 
@@ -76,12 +82,26 @@ If there is a special character like comma, you need use double quote mark so th
 **Hint:** Remember to give your variables descriptive names using the `variables = c(name = "code")` syntax.
 
 ```{r county-data}
-# Write your get_acs() code here
+# Retrieve county-level ACS data for Missouri
+county_data <- get_acs(
+  geography = "county",
+  state = my_state,
+  variables = c(
+    median_income   = "B19013_001",
+    total_population = "B01003_001"
+  ),
+  year   = 2022,
+  survey = "acs5",
+  output = "wide"
+)
 
-# Clean the county names to remove state name and "County" 
-# Hint: use mutate() with str_remove()
+# Clean county names: remove ", Missouri" and " County"
+county_data <- county_data %>%
+  mutate(NAME = str_remove(NAME, ", Missouri"),
+         NAME = str_remove(NAME, " County"))
 
 # Display the first few rows
+head(county_data)
 ```
 
 ## 2.2 Data Quality Assessment
@@ -99,10 +119,27 @@ If there is a special character like comma, you need use double quote mark so th
 **Hint:** Use `mutate()` with `case_when()` for the categories.
 
 ```{r income-reliability}
-# Calculate MOE percentage and reliability categories using mutate()
+library(dplyr)
+library(stringr)
 
-# Create a summary showing count of counties in each reliability category
-# Hint: use count() and mutate() to add percentages
+income_reliability <- county_data %>%
+  mutate(income_moe_pct = if_else(
+      median_incomeE > 0,
+      100 * median_incomeM / median_incomeE,
+      NA_real_
+  ),
+  reliability = case_when(
+      income_moe_pct < 5 ~ "High Confidence",
+      income_moe_pct >= 5 & income_moe_pct <= 10 ~ "Moderate Confidence",
+      income_moe_pct > 10 ~ "Low Confidence",
+      TRUE ~ NA_character_
+  ),
+  unreliable_flag = if_else(income_moe_pct > 10, TRUE, FALSE)
+  ) %>%
+  select(NAME, median_incomeE, median_incomeM, income_moe_pct, reliability, unreliable_flag)
+
+# Display the first few rows
+head(income_reliability)
 ```
 
 ## 2.3 High Uncertainty Counties
