@@ -211,7 +211,7 @@ selected_counties <- income_reliability %>%
 selected_counties
 ```
 
-**Comment on the output:** [write something :)]
+**Comment on the output:** I selected St. Louis, Buchanan, and Texas counties to represent high, moderate, and low data reliability contexts—urban, mid-sized, and rural areas, respectively. 
 
 ## 3.2 Tract-Level Demographics
 
