@@ -164,6 +164,7 @@ top5_uncertain <- income_reliability %>%
   slice(1:5) %>%
   select(
     County = NAME,
+    total_popE = total_popE,
     `Median Income (Estimate)` = median_incomeE,
     `Margin of Error` = median_incomeM,
     `MOE %` = income_moe_pct,
@@ -179,7 +180,7 @@ kable(
 
 **Data Quality Commentary:**
 
-[Write 2-3 sentences explaining what these results mean for algorithmic decision-making. Consider: Which counties might be poorly served by algorithms that rely on this income data? What factors might contribute to higher uncertainty?]
+The top five counties all have populations of around 40,000 to 60,000 or even fewer. For example, Mercer has just over 50,000 residents, yet its MOE reaches 18%. This suggests that smaller populations may lead to higher uncertainty in estimates, likely due to smaller sample sizes in the ACS survey. Carter, Shannon, and Ozark are located in Missouri’s Ozark region, an area characterized by both limited resources and highly dispersed populations. These factors can contribute to challenges in data collection, resulting in less reliable estimates.
 
 # Part 3: Neighborhood-Level Analysis
 
