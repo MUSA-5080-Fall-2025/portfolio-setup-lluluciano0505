@@ -156,8 +156,24 @@ head(income_reliability)
 
 ```{r high-uncertainty}
 # Create table of top 5 counties by MOE percentage
+library(knitr)
+
+top5_uncertain <- income_reliability %>%
+  arrange(desc(income_moe_pct)) %>%
+  slice(1:5) %>%
+  select(
+    County = NAME,
+    `Median Income (Estimate)` = median_incomeE,
+    `Margin of Error` = median_incomeM,
+    `MOE %` = income_moe_pct,
+    `Reliability` = reliability
+  )
 
 # Format as table with kable() - include appropriate column names and caption
+kable(
+  top5_uncertain,
+  caption = "Top 5 Counties with Highest Median Income MOE Percentages in Missouri"
+)
 ```
 
 **Data Quality Commentary:**
@@ -175,9 +191,22 @@ head(income_reliability)
 ```{r select-counties}
 # Use filter() to select 2-3 counties from your county_reliability data
 # Store the selected counties in a variable called selected_counties
+selected_counties <- income_reliability %>%
+  filter(
+    NAME %in% c("St. Louis",    # High Confidence
+                "Cole",      # Moderate Confidence
+                "Clark")     # Low Confidence
+  ) %>%
+  select(
+    County = NAME,
+    `Median Income (Estimate)` = median_incomeE,
+    `MOE %` = income_moe_pct,
+    `Reliability` = reliability
+  )
 
 # Display the selected counties with their key characteristics
 # Show: county name, median income, MOE percentage, reliability category
+selected_counties
 ```
 
 **Comment on the output:** [write something :)]
