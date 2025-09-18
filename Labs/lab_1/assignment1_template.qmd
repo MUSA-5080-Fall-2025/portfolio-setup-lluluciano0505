@@ -250,24 +250,6 @@ tract_demo_raw <- get_acs(
   output    = "wide"
 )
 
-# Calculate percentage of each group using mutate()
-tract_demo <- tract_demo_raw %>%
-  mutate(
-    pct_white    = if_else(total_popE > 0, 100 * whiteE / total_popE, NA_real_),
-    pct_black    = if_else(total_popE > 0, 100 * blackE / total_popE, NA_real_),
-    pct_hispanic = if_else(total_popE > 0, 100 * hispanicE / total_popE, NA_real_)
-  ) %>%
-  select(
-    GEOID,
-    NAME,
-    total_population = total_popE,
-    white_population = whiteE,
-    black_population = blackE,
-    hispanic_population = hispanicE,
-    pct_white,
-    pct_black,
-    pct_hispanic
-  )
 
 # Create percentages for white, Black, and Hispanic populations
 tract_demo <- tract_demo_raw %>%
@@ -363,17 +345,6 @@ moe_pct <- tract_demo_raw %>%
 
 # Create a flag for tracts with high MOE on any demographic variable
 # Use logical operators (| for OR) in an ifelse() statement
-avg_moes <- moe_pct %>%
-  summarise(
-    avg_white_moe    = mean(white_moe_pct, na.rm = TRUE),
-    avg_black_moe    = mean(black_moe_pct, na.rm = TRUE),
-    avg_hispanic_moe = mean(hispanic_moe_pct, na.rm = TRUE)
-  )
-
-white_avg    <- avg_moes$avg_white_moe
-black_avg    <- avg_moes$avg_black_moe
-hispanic_avg <- avg_moes$avg_hispanic_moe
-
 tract_quality <- tract_demo %>%
   select(GEOID, county_name, tract_name, total_population,
          white_pct, black_pct, hispanic_pct) %>%

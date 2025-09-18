@@ -495,7 +495,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(</span>
 <span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a>    NAME <span class="sc">%in%</span> <span class="fu">c</span>(<span class="st">"St. Louis"</span>,    <span class="co"># High Confidence</span></span>
 <span id="cb10-6"><a href="#cb10-6" aria-hidden="true" tabindex="-1"></a>                <span class="st">"Buchanan"</span>,      <span class="co"># Moderate Confidence</span></span>
-<span id="cb10-7"><a href="#cb10-7" aria-hidden="true" tabindex="-1"></a>                <span class="st">"Texas"</span>)     <span class="co"># Low Confidence</span></span>
+<span id="cb10-7"><a href="#cb10-7" aria-hidden="true" tabindex="-1"></a>                <span class="st">"Mississippi"</span>)     <span class="co"># Low Confidence</span></span>
 <span id="cb10-8"><a href="#cb10-8" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
 <span id="cb10-9"><a href="#cb10-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(</span>
 <span id="cb10-10"><a href="#cb10-10" aria-hidden="true" tabindex="-1"></a>    <span class="at">County =</span> NAME,</span>
@@ -509,14 +509,14 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb10-18"><a href="#cb10-18" aria-hidden="true" tabindex="-1"></a>selected_counties</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code># A tibble: 3 × 4
-  County    `Median Income (Estimate)` `MOE %` Reliability        
-  &lt;chr&gt;                          &lt;dbl&gt;   &lt;dbl&gt; &lt;chr&gt;              
-1 Buchanan                       58303    5.07 Moderate Confidence
-2 St. Louis                      78067    1.64 High Confidence    
-3 Texas                          42870   11.4  Low Confidence     </code></pre>
+  County      `Median Income (Estimate)` `MOE %` Reliability        
+  &lt;chr&gt;                            &lt;dbl&gt;   &lt;dbl&gt; &lt;chr&gt;              
+1 Buchanan                         58303    5.07 Moderate Confidence
+2 Mississippi                      40833   18.5  Low Confidence     
+3 St. Louis                        78067    1.64 High Confidence    </code></pre>
 </div>
 </div>
-<p><strong>Comment on the output:</strong> I selected St.&nbsp;Louis, Buchanan, and Texas counties to represent high, moderate, and low data reliability contexts—urban, mid-sized, and rural areas, respectively.</p>
+<p><strong>Comment on the output:</strong> I selected St.&nbsp;Louis, Buchanan, and Mississippi counties to represent high, moderate, and low data reliability contexts—urban, mid-sized, and rural areas, respectively.</p>
 </section>
 <section id="tract-level-demographics" class="level2">
 <h2 class="anchored" data-anchor-id="tract-level-demographics">3.2 Tract-Level Demographics</h2>
@@ -826,7 +826,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <table class="caption-top table table-sm table-striped small">
 <caption>Average Demographics by County</caption>
 <colgroup>
-<col style="width: 23%">
+<col style="width: 26%">
 <col style="width: 12%">
 <col style="width: 19%">
 <col style="width: 19%">
@@ -857,11 +857,11 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <td style="text-align: right;">3.002732</td>
 </tr>
 <tr class="odd">
-<td style="text-align: left;">Texas County</td>
-<td style="text-align: right;">8</td>
-<td style="text-align: right;">90.21293</td>
-<td style="text-align: right;">1.883072</td>
-<td style="text-align: right;">2.467462</td>
+<td style="text-align: left;">Mississippi County</td>
+<td style="text-align: right;">4</td>
+<td style="text-align: right;">72.48128</td>
+<td style="text-align: right;">22.041059</td>
+<td style="text-align: right;">1.582371</td>
 </tr>
 </tbody>
 </table>
@@ -888,29 +888,41 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb15-10"><a href="#cb15-10" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb15-11"><a href="#cb15-11" aria-hidden="true" tabindex="-1"></a><span class="co"># Create a flag for tracts with high MOE on any demographic variable</span></span>
 <span id="cb15-12"><a href="#cb15-12" aria-hidden="true" tabindex="-1"></a><span class="co"># Use logical operators (| for OR) in an ifelse() statement</span></span>
-<span id="cb15-13"><a href="#cb15-13" aria-hidden="true" tabindex="-1"></a>tract_quality <span class="ot">&lt;-</span> tract_demo <span class="sc">%&gt;%</span></span>
-<span id="cb15-14"><a href="#cb15-14" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(GEOID, county_name, tract_name, total_population,</span>
-<span id="cb15-15"><a href="#cb15-15" aria-hidden="true" tabindex="-1"></a>         white_pct, black_pct, hispanic_pct) <span class="sc">%&gt;%</span></span>
-<span id="cb15-16"><a href="#cb15-16" aria-hidden="true" tabindex="-1"></a>  <span class="fu">left_join</span>(moe_pct, <span class="at">by =</span> <span class="st">"GEOID"</span>) <span class="sc">%&gt;%</span></span>
-<span id="cb15-17"><a href="#cb15-17" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
-<span id="cb15-18"><a href="#cb15-18" aria-hidden="true" tabindex="-1"></a>    <span class="at">high_moe_flag =</span> <span class="fu">ifelse</span>(</span>
-<span id="cb15-19"><a href="#cb15-19" aria-hidden="true" tabindex="-1"></a>      <span class="fu">coalesce</span>(white_moe_pct    <span class="sc">&gt;</span> <span class="dv">50</span>, <span class="cn">FALSE</span>) <span class="sc">|</span></span>
-<span id="cb15-20"><a href="#cb15-20" aria-hidden="true" tabindex="-1"></a>      <span class="fu">coalesce</span>(black_moe_pct    <span class="sc">&gt;</span> <span class="dv">50</span>, <span class="cn">FALSE</span>) <span class="sc">|</span></span>
-<span id="cb15-21"><a href="#cb15-21" aria-hidden="true" tabindex="-1"></a>      <span class="fu">coalesce</span>(hispanic_moe_pct <span class="sc">&gt;</span> <span class="dv">50</span>, <span class="cn">FALSE</span>),</span>
-<span id="cb15-22"><a href="#cb15-22" aria-hidden="true" tabindex="-1"></a>      <span class="cn">TRUE</span>, <span class="cn">FALSE</span></span>
-<span id="cb15-23"><a href="#cb15-23" aria-hidden="true" tabindex="-1"></a>    ))</span>
-<span id="cb15-24"><a href="#cb15-24" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb15-25"><a href="#cb15-25" aria-hidden="true" tabindex="-1"></a><span class="co"># Create summary statistics showing how many tracts have data quality issues</span></span>
-<span id="cb15-26"><a href="#cb15-26" aria-hidden="true" tabindex="-1"></a>overall_summary <span class="ot">&lt;-</span> tract_quality <span class="sc">%&gt;%</span></span>
-<span id="cb15-27"><a href="#cb15-27" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarise</span>(</span>
-<span id="cb15-28"><a href="#cb15-28" aria-hidden="true" tabindex="-1"></a>    <span class="at">n_tracts       =</span> <span class="fu">n</span>(),</span>
-<span id="cb15-29"><a href="#cb15-29" aria-hidden="true" tabindex="-1"></a>    <span class="at">n_high_moe     =</span> <span class="fu">sum</span>(high_moe_flag, <span class="at">na.rm =</span> <span class="cn">TRUE</span>),</span>
-<span id="cb15-30"><a href="#cb15-30" aria-hidden="true" tabindex="-1"></a>    <span class="at">share_high_moe =</span> <span class="fu">round</span>(<span class="dv">100</span> <span class="sc">*</span> n_high_moe <span class="sc">/</span> n_tracts, <span class="dv">1</span>)</span>
-<span id="cb15-31"><a href="#cb15-31" aria-hidden="true" tabindex="-1"></a>  )</span>
-<span id="cb15-32"><a href="#cb15-32" aria-hidden="true" tabindex="-1"></a><span class="fu">kable</span>(overall_summary, <span class="at">caption =</span> <span class="st">"Overall count and share of high-MOE tracts (MOE% &gt; 15)"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb15-13"><a href="#cb15-13" aria-hidden="true" tabindex="-1"></a>avg_moes <span class="ot">&lt;-</span> moe_pct <span class="sc">%&gt;%</span></span>
+<span id="cb15-14"><a href="#cb15-14" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarise</span>(</span>
+<span id="cb15-15"><a href="#cb15-15" aria-hidden="true" tabindex="-1"></a>    <span class="at">avg_white_moe    =</span> <span class="fu">mean</span>(white_moe_pct, <span class="at">na.rm =</span> <span class="cn">TRUE</span>),</span>
+<span id="cb15-16"><a href="#cb15-16" aria-hidden="true" tabindex="-1"></a>    <span class="at">avg_black_moe    =</span> <span class="fu">mean</span>(black_moe_pct, <span class="at">na.rm =</span> <span class="cn">TRUE</span>),</span>
+<span id="cb15-17"><a href="#cb15-17" aria-hidden="true" tabindex="-1"></a>    <span class="at">avg_hispanic_moe =</span> <span class="fu">mean</span>(hispanic_moe_pct, <span class="at">na.rm =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb15-18"><a href="#cb15-18" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb15-19"><a href="#cb15-19" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-20"><a href="#cb15-20" aria-hidden="true" tabindex="-1"></a>white_avg    <span class="ot">&lt;-</span> avg_moes<span class="sc">$</span>avg_white_moe</span>
+<span id="cb15-21"><a href="#cb15-21" aria-hidden="true" tabindex="-1"></a>black_avg    <span class="ot">&lt;-</span> avg_moes<span class="sc">$</span>avg_black_moe</span>
+<span id="cb15-22"><a href="#cb15-22" aria-hidden="true" tabindex="-1"></a>hispanic_avg <span class="ot">&lt;-</span> avg_moes<span class="sc">$</span>avg_hispanic_moe</span>
+<span id="cb15-23"><a href="#cb15-23" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-24"><a href="#cb15-24" aria-hidden="true" tabindex="-1"></a>tract_quality <span class="ot">&lt;-</span> tract_demo <span class="sc">%&gt;%</span></span>
+<span id="cb15-25"><a href="#cb15-25" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(GEOID, county_name, tract_name, total_population,</span>
+<span id="cb15-26"><a href="#cb15-26" aria-hidden="true" tabindex="-1"></a>         white_pct, black_pct, hispanic_pct) <span class="sc">%&gt;%</span></span>
+<span id="cb15-27"><a href="#cb15-27" aria-hidden="true" tabindex="-1"></a>  <span class="fu">left_join</span>(moe_pct, <span class="at">by =</span> <span class="st">"GEOID"</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb15-28"><a href="#cb15-28" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
+<span id="cb15-29"><a href="#cb15-29" aria-hidden="true" tabindex="-1"></a>    <span class="at">high_moe_flag =</span> <span class="fu">ifelse</span>(</span>
+<span id="cb15-30"><a href="#cb15-30" aria-hidden="true" tabindex="-1"></a>      <span class="fu">coalesce</span>(white_moe_pct    <span class="sc">&gt;</span> <span class="dv">100</span>, <span class="cn">FALSE</span>) <span class="sc">|</span></span>
+<span id="cb15-31"><a href="#cb15-31" aria-hidden="true" tabindex="-1"></a>      <span class="fu">coalesce</span>(black_moe_pct    <span class="sc">&gt;</span> <span class="dv">100</span>, <span class="cn">FALSE</span>) <span class="sc">|</span></span>
+<span id="cb15-32"><a href="#cb15-32" aria-hidden="true" tabindex="-1"></a>      <span class="fu">coalesce</span>(hispanic_moe_pct <span class="sc">&gt;</span> <span class="dv">100</span>, <span class="cn">FALSE</span>),</span>
+<span id="cb15-33"><a href="#cb15-33" aria-hidden="true" tabindex="-1"></a>      <span class="cn">TRUE</span>, <span class="cn">FALSE</span></span>
+<span id="cb15-34"><a href="#cb15-34" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb15-35"><a href="#cb15-35" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb15-36"><a href="#cb15-36" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-37"><a href="#cb15-37" aria-hidden="true" tabindex="-1"></a><span class="co"># Create summary statistics showing how many tracts have data quality issues</span></span>
+<span id="cb15-38"><a href="#cb15-38" aria-hidden="true" tabindex="-1"></a>overall_summary <span class="ot">&lt;-</span> tract_quality <span class="sc">%&gt;%</span></span>
+<span id="cb15-39"><a href="#cb15-39" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarise</span>(</span>
+<span id="cb15-40"><a href="#cb15-40" aria-hidden="true" tabindex="-1"></a>    <span class="at">n_tracts       =</span> <span class="fu">n</span>(),</span>
+<span id="cb15-41"><a href="#cb15-41" aria-hidden="true" tabindex="-1"></a>    <span class="at">n_high_moe     =</span> <span class="fu">sum</span>(high_moe_flag, <span class="at">na.rm =</span> <span class="cn">TRUE</span>),</span>
+<span id="cb15-42"><a href="#cb15-42" aria-hidden="true" tabindex="-1"></a>    <span class="at">share_high_moe =</span> <span class="fu">round</span>(<span class="dv">100</span> <span class="sc">*</span> n_high_moe <span class="sc">/</span> n_tracts, <span class="dv">1</span>)</span>
+<span id="cb15-43"><a href="#cb15-43" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb15-44"><a href="#cb15-44" aria-hidden="true" tabindex="-1"></a><span class="fu">kable</span>(overall_summary, <span class="at">caption =</span> <span class="st">"Overall count and share of high-MOE tracts"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output-display">
 <table class="caption-top table table-sm table-striped small">
-<caption>Overall count and share of high-MOE tracts (MOE% &gt; 15)</caption>
+<caption>Overall count and share of high-MOE tracts</caption>
 <thead>
 <tr class="header">
 <th style="text-align: right;">n_tracts</th>
@@ -920,9 +932,9 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </thead>
 <tbody>
 <tr class="odd">
-<td style="text-align: right;">270</td>
-<td style="text-align: right;">255</td>
-<td style="text-align: right;">94.4</td>
+<td style="text-align: right;">266</td>
+<td style="text-align: right;">145</td>
+<td style="text-align: right;">54.5</td>
 </tr>
 </tbody>
 </table>
@@ -935,10 +947,10 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb16-6"><a href="#cb16-6" aria-hidden="true" tabindex="-1"></a>    <span class="at">share_high_moe =</span> <span class="fu">round</span>(<span class="dv">100</span> <span class="sc">*</span> n_high_moe <span class="sc">/</span> n_tracts, <span class="dv">1</span>)</span>
 <span id="cb16-7"><a href="#cb16-7" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
 <span id="cb16-8"><a href="#cb16-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">arrange</span>(<span class="fu">desc</span>(share_high_moe), <span class="fu">desc</span>(n_high_moe))</span>
-<span id="cb16-9"><a href="#cb16-9" aria-hidden="true" tabindex="-1"></a><span class="fu">kable</span>(county_summary, <span class="at">caption =</span> <span class="st">"High-MOE tracts by county (MOE% &gt; 15)"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb16-9"><a href="#cb16-9" aria-hidden="true" tabindex="-1"></a><span class="fu">kable</span>(county_summary, <span class="at">caption =</span> <span class="st">"High-MOE tracts by county"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output-display">
 <table class="caption-top table table-sm table-striped small">
-<caption>High-MOE tracts by county (MOE% &gt; 15)</caption>
+<caption>High-MOE tracts by county</caption>
 <thead>
 <tr class="header">
 <th style="text-align: left;">county_name</th>
@@ -949,22 +961,22 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </thead>
 <tbody>
 <tr class="odd">
-<td style="text-align: left;">Buchanan County</td>
-<td style="text-align: right;">26</td>
-<td style="text-align: right;">26</td>
-<td style="text-align: right;">100.0</td>
+<td style="text-align: left;">Mississippi County</td>
+<td style="text-align: right;">4</td>
+<td style="text-align: right;">3</td>
+<td style="text-align: right;">75.0</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">St.&nbsp;Louis County</td>
 <td style="text-align: right;">236</td>
-<td style="text-align: right;">223</td>
-<td style="text-align: right;">94.5</td>
+<td style="text-align: right;">129</td>
+<td style="text-align: right;">54.7</td>
 </tr>
 <tr class="odd">
-<td style="text-align: left;">Texas County</td>
-<td style="text-align: right;">8</td>
-<td style="text-align: right;">6</td>
-<td style="text-align: right;">75.0</td>
+<td style="text-align: left;">Buchanan County</td>
+<td style="text-align: right;">26</td>
+<td style="text-align: right;">13</td>
+<td style="text-align: right;">50.0</td>
 </tr>
 </tbody>
 </table>
@@ -1018,19 +1030,19 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <tbody>
 <tr class="odd">
 <td style="text-align: left;">FALSE</td>
-<td style="text-align: right;">15</td>
-<td style="text-align: right;">4488.133</td>
-<td style="text-align: right;">35.73905</td>
-<td style="text-align: right;">53.43592</td>
-<td style="text-align: right;">4.259571</td>
+<td style="text-align: right;">121</td>
+<td style="text-align: right;">4362.760</td>
+<td style="text-align: right;">58.94784</td>
+<td style="text-align: right;">28.04363</td>
+<td style="text-align: right;">4.069538</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">TRUE</td>
-<td style="text-align: right;">255</td>
-<td style="text-align: right;">4085.306</td>
-<td style="text-align: right;">65.83459</td>
-<td style="text-align: right;">21.66414</td>
-<td style="text-align: right;">3.350713</td>
+<td style="text-align: right;">145</td>
+<td style="text-align: right;">3921.779</td>
+<td style="text-align: right;">67.30648</td>
+<td style="text-align: right;">20.72906</td>
+<td style="text-align: right;">2.844836</td>
 </tr>
 </tbody>
 </table>
