@@ -197,7 +197,7 @@ selected_counties <- income_reliability %>%
   filter(
     NAME %in% c("St. Louis",    # High Confidence
                 "Buchanan",      # Moderate Confidence
-                "Texas")     # Low Confidence
+                "Mississippi")     # Low Confidence
   ) %>%
   select(
     County = NAME,
@@ -211,7 +211,7 @@ selected_counties <- income_reliability %>%
 selected_counties
 ```
 
-**Comment on the output:** I selected St. Louis, Buchanan, and Texas counties to represent high, moderate, and low data reliability contexts—urban, mid-sized, and rural areas, respectively. 
+**Comment on the output:** I selected St. Louis, Buchanan, and Mississippi counties to represent high, moderate, and low data reliability contexts—urban, mid-sized, and rural areas, respectively. 
 
 ## 3.2 Tract-Level Demographics
 
@@ -363,17 +363,29 @@ moe_pct <- tract_demo_raw %>%
 
 # Create a flag for tracts with high MOE on any demographic variable
 # Use logical operators (| for OR) in an ifelse() statement
+avg_moes <- moe_pct %>%
+  summarise(
+    avg_white_moe    = mean(white_moe_pct, na.rm = TRUE),
+    avg_black_moe    = mean(black_moe_pct, na.rm = TRUE),
+    avg_hispanic_moe = mean(hispanic_moe_pct, na.rm = TRUE)
+  )
+
+white_avg    <- avg_moes$avg_white_moe
+black_avg    <- avg_moes$avg_black_moe
+hispanic_avg <- avg_moes$avg_hispanic_moe
+
 tract_quality <- tract_demo %>%
   select(GEOID, county_name, tract_name, total_population,
          white_pct, black_pct, hispanic_pct) %>%
   left_join(moe_pct, by = "GEOID") %>%
   mutate(
     high_moe_flag = ifelse(
-      coalesce(white_moe_pct    > 50, FALSE) |
-      coalesce(black_moe_pct    > 50, FALSE) |
-      coalesce(hispanic_moe_pct > 50, FALSE),
+      coalesce(white_moe_pct    > 100, FALSE) |
+      coalesce(black_moe_pct    > 100, FALSE) |
+      coalesce(hispanic_moe_pct > 100, FALSE),
       TRUE, FALSE
-    ))
+    )
+  )
 
 # Create summary statistics showing how many tracts have data quality issues
 overall_summary <- tract_quality %>%
@@ -382,7 +394,7 @@ overall_summary <- tract_quality %>%
     n_high_moe     = sum(high_moe_flag, na.rm = TRUE),
     share_high_moe = round(100 * n_high_moe / n_tracts, 1)
   )
-kable(overall_summary, caption = "Overall count and share of high-MOE tracts (MOE% > 15)")
+kable(overall_summary, caption = "Overall count and share of high-MOE tracts")
 
 county_summary <- tract_quality %>%
   group_by(county_name) %>%
@@ -392,7 +404,7 @@ county_summary <- tract_quality %>%
     share_high_moe = round(100 * n_high_moe / n_tracts, 1)
   ) %>%
   arrange(desc(share_high_moe), desc(n_high_moe))
-kable(county_summary, caption = "High-MOE tracts by county (MOE% > 15)")
+kable(county_summary, caption = "High-MOE tracts by county")
 ```
 
 ## 4.2 Pattern Analysis
