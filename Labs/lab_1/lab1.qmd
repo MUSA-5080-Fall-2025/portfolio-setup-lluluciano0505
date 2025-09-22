@@ -432,6 +432,22 @@ income using different visualization techniques.
 -   Format the y-axis with dollar signs
 -   Add a title that mentions both variables
 
+```{r}
+# Log-transformed scatter plot
+ggplot(county_data) +
+  aes(x = median_ageE, y = median_incomeE) +
+  geom_point(alpha = 0.5) +
+  geom_smooth(method = "loess", se = TRUE) +
+  labs(
+    title = "Medium Age vs Medium Income",
+    x = "Medium Age",
+    y = "Median Household Income ($)"
+  ) +
+  theme_dark() +
+  scale_y_continuous(labels = dollar)
+```
+
+
 ------------------------------------------------------------------------
 
 ## Exercise 3: Data Quality Visualization 
@@ -504,6 +520,35 @@ population vs age MOE percentage
 using `geom_hline()` with a blue dashed line 
 - Use `theme_classic()`instead of `theme_minimal()` 
 - Create a boxplot comparing age MOE across the three population categories
+
+```{r}
+# Calculate MOE percentages
+county_reliability <- county_data %>%
+  mutate(
+    med_age_moe_pct = (median_ageM / median_ageE) * 100,
+    pop_category = case_when(
+      total_popE < 50000 ~ "Small (<50K)",
+      total_popE < 200000 ~ "Medium (50K-200K)",
+      TRUE ~ "Large (200K+)"
+    )
+  )
+
+# Box plots by population category
+ggplot(county_reliability) +
+  aes(x = pop_category, y = med_age_moe_pct, fill = pop_category) +
+  geom_boxplot() +
+  geom_point(color="purple", size=2)+
+  labs(
+    title = "Data Reliability by County Size Category",
+    x = "Population Category",
+    y = "Margin of Error (%)"
+  ) +
+  geom_hline(yintercept = 5, color = "red", linetype = "dashed") +
+  theme_minimal() +
+  theme(legend.position = "none") # Remove legend since x-axis is clear
+
+```
+
 
 ------------------------------------------------------------------------
 
