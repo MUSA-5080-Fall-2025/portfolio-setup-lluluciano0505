@@ -1,0 +1,703 @@
+---
+title: "Assignment 1: Census Data Quality for Policy Decisions"
+subtitle: "Evaluating Data Reliability for Algorithmic Decision-Making"
+author: "Luciano"
+date: today
+format: 
+  html:
+    code-fold: false
+    toc: true
+    toc-location: left
+    theme: cosmo
+execute:
+  warning: false
+  message: false
+---
+
+# Assignment Overview
+
+## Scenario
+
+You are a data analyst for the **Missouri Department of Human Services**. The department is considering implementing an algorithmic system to identify communities that should receive priority for social service funding and outreach programs. Your supervisor has asked you to evaluate the quality and reliability of available census data to inform this decision.
+
+Drawing on our Week 2 discussion of algorithmic bias, you need to assess not just what the data shows, but how reliable it is and what communities might be affected by data quality issues.
+
+## Learning Objectives
+
+- Apply dplyr functions to real census data for policy analysis
+- Evaluate data quality using margins of error 
+- Connect technical analysis to algorithmic decision-making
+- Identify potential equity implications of data reliability issues
+- Create professional documentation for policy stakeholders
+
+## Submission Instructions
+
+**Submit by posting your updated portfolio link on Canvas.** Your assignment should be accessible at `your-portfolio-url/assignments/assignment_1/`
+
+Make sure to update your `_quarto.yml` navigation to include this assignment under an "Assignments" menu.
+
+# Part 1: Portfolio Integration
+
+Create this assignment in your portfolio repository under an `assignments/assignment_1/` folder structure. Update your navigation menu to include:
+
+```
+- text: Assignments
+  menu:
+    - href: assignments/assignment_1/assignment_1.qmd
+      text: "Assignment 1: Census Data Exploration"
+```
+If there is a special character like comma, you need use double quote mark so that the quarto can identify this as text
+
+# Setup
+
+
+::: {.cell}
+
+```{.r .cell-code}
+# Load required packages
+library(tidycensus)
+library(tidyverse)
+library(knitr)
+
+# Set your Census API key
+census_api_key("b236a5b2547ce79c3e203c3e1366ed7fa7b3d463", install = FALSE)
+Sys.getenv("CENSUS_API_KEY")
+```
+
+::: {.cell-output .cell-output-stdout}
+
+```
+[1] "b236a5b2547ce79c3e203c3e1366ed7fa7b3d463"
+```
+
+
+:::
+
+```{.r .cell-code}
+# Choose your state for analysis
+my_state <- "Missouri"
+```
+:::
+
+
+**State Selection:** I have chosen **Missouri** for this analysis because: major metropolitan areas (like St. Louis and Kansas City) with a large number of rural counties. This scenario can help to illustrate how data quality may vary between urban and rural areas, which is important for equitable policy decisions.
+
+# Part 2: County-Level Resource Assessment
+
+## 2.1 Data Retrieval
+
+**Your Task:** Use `get_acs()` to retrieve county-level data for your chosen state.
+
+**Requirements:**
+- Geography: county level
+- Variables: median household income (B19013_001) and total population (B01003_001)  
+- Year: 2022
+- Survey: acs5
+- Output format: wide
+
+**Hint:** Remember to give your variables descriptive names using the `variables = c(name = "code")` syntax.
+
+
+::: {.cell}
+
+```{.r .cell-code}
+# Retrieve county-level ACS data for Missouri
+county_data <- get_acs(
+  geography = "county",
+  state = my_state,
+  variables = c(
+    median_income = "B19013_001",
+    total_pop = "B01003_001"
+  ),
+  year   = 2022,
+  survey = "acs5",
+  output = "wide"
+)
+
+# Clean county names: remove ", Missouri" and " County"
+county_data <- county_data %>%
+  mutate(NAME = str_remove(NAME, ", Missouri"),
+         NAME = str_remove(NAME, " County"))
+
+# Display the first few rows
+head(county_data)
+```
+
+::: {.cell-output .cell-output-stdout}
+
+```
+# A tibble: 6 × 6
+  GEOID NAME     median_incomeE median_incomeM total_popE total_popM
+  <chr> <chr>             <dbl>          <dbl>      <dbl>      <dbl>
+1 29001 Adair             51020           4430      25299         NA
+2 29003 Andrew            68774           4776      18069         NA
+3 29005 Atchison          58521           3686       5270         NA
+4 29007 Audrain           51745           2309      24873         NA
+5 29009 Barry             55592           5385      34701         NA
+6 29011 Barton            48105           5576      11683         NA
+```
+
+
+:::
+:::
+
+
+## 2.2 Data Quality Assessment
+
+**Your Task:** Calculate margin of error percentages and create reliability categories.
+
+**Requirements:**
+- Calculate MOE percentage: (margin of error / estimate) * 100
+- Create reliability categories:
+  - High Confidence: MOE < 5%
+  - Moderate Confidence: MOE 5-10%  
+  - Low Confidence: MOE > 10%
+- Create a flag for unreliable estimates (MOE > 10%)
+
+**Hint:** Use `mutate()` with `case_when()` for the categories.
+
+
+::: {.cell}
+
+```{.r .cell-code}
+library(dplyr)
+library(stringr)
+
+income_reliability <- county_data %>%
+  mutate(income_moe_pct = if_else(
+      median_incomeE > 0,
+      100 * median_incomeM / median_incomeE,
+      NA_real_
+  ),
+  reliability = case_when(
+      income_moe_pct < 5 ~ "High Confidence",
+      income_moe_pct >= 5 & income_moe_pct <= 10 ~ "Moderate Confidence",
+      income_moe_pct > 10 ~ "Low Confidence",
+      TRUE ~ NA_character_
+  ),
+  unreliable_flag = if_else(income_moe_pct > 10, TRUE, FALSE),
+  total_popE = if_else(total_popE < 0, NA_real_, total_popE
+  )) %>%
+  select(GEOID, NAME, median_incomeE, median_incomeM, income_moe_pct, reliability, unreliable_flag, total_popE)
+
+# Display the first few rows
+head(income_reliability)
+```
+
+::: {.cell-output .cell-output-stdout}
+
+```
+# A tibble: 6 × 8
+  GEOID NAME     median_incomeE median_incomeM income_moe_pct reliability       
+  <chr> <chr>             <dbl>          <dbl>          <dbl> <chr>             
+1 29001 Adair             51020           4430           8.68 Moderate Confiden…
+2 29003 Andrew            68774           4776           6.94 Moderate Confiden…
+3 29005 Atchison          58521           3686           6.30 Moderate Confiden…
+4 29007 Audrain           51745           2309           4.46 High Confidence   
+5 29009 Barry             55592           5385           9.69 Moderate Confiden…
+6 29011 Barton            48105           5576          11.6  Low Confidence    
+# ℹ 2 more variables: unreliable_flag <lgl>, total_popE <dbl>
+```
+
+
+:::
+:::
+
+
+## 2.3 High Uncertainty Counties
+
+**Your Task:** Identify the 5 counties with the highest MOE percentages.
+
+**Requirements:**
+- Sort by MOE percentage (highest first)
+- Select the top 5 counties
+- Display: county name, median income, margin of error, MOE percentage, reliability category
+- Format as a professional table using `kable()`
+
+**Hint:** Use `arrange()`, `slice()`, and `select()` functions.
+
+
+::: {.cell}
+
+```{.r .cell-code}
+# Create table of top 5 counties by MOE percentage
+library(knitr)
+
+top5_uncertain <- income_reliability %>%
+  arrange(desc(income_moe_pct)) %>%
+  slice(1:5) %>%
+  select(
+    County = NAME,
+    total_popE = total_popE,
+    `Median Income (Estimate)` = median_incomeE,
+    `Margin of Error` = median_incomeM,
+    `MOE %` = income_moe_pct,
+    `Reliability` = reliability
+  )
+
+# Format as table with kable() - include appropriate column names and caption
+kable(
+  top5_uncertain,
+  caption = "Top 5 Counties with Highest Median Income MOE Percentages in Missouri"
+)
+```
+
+::: {.cell-output-display}
+
+
+Table: Top 5 Counties with Highest Median Income MOE Percentages in Missouri
+
+|County      | total_popE| Median Income (Estimate)| Margin of Error|    MOE %|Reliability    |
+|:-----------|----------:|------------------------:|---------------:|--------:|:--------------|
+|Shannon     |       7132|                    46767|            9920| 21.21154|Low Confidence |
+|Carter      |       5299|                    45737|            8517| 18.62168|Low Confidence |
+|Mississippi |      12305|                    40833|            7546| 18.48015|Low Confidence |
+|Ozark       |       8688|                    39125|            7092| 18.12652|Low Confidence |
+|Mercer      |       3517|                    55592|           10045| 18.06915|Low Confidence |
+
+
+:::
+:::
+
+
+**Data Quality Commentary:**
+
+The top five counties all have populations of around 40,000 to 60,000 or even fewer. For example, Mercer has just over 50,000 residents, yet its MOE reaches 18%. This suggests that smaller populations may lead to higher uncertainty in estimates, likely due to smaller sample sizes in the ACS survey. Carter, Shannon, and Ozark are located in Missouri’s Ozark region, an area characterized by both limited resources and highly dispersed populations. These factors can contribute to challenges in data collection, resulting in less reliable estimates.
+
+# Part 3: Neighborhood-Level Analysis
+
+## 3.1 Focus Area Selection
+
+**Your Task:** Select 2-3 counties from your reliability analysis for detailed tract-level study.
+
+**Strategy:** Choose counties that represent different reliability levels (e.g., 1 high confidence, 1 moderate, 1 low confidence) to compare how data quality varies.
+
+
+::: {.cell}
+
+```{.r .cell-code}
+# Use filter() to select 2-3 counties from your county_reliability data
+# Store the selected counties in a variable called selected_counties
+selected_counties <- income_reliability %>%
+  filter(
+    NAME %in% c("St. Louis",    # High Confidence
+                "Buchanan",      # Moderate Confidence
+                "Texas")     # Low Confidence
+  ) %>%
+  select(
+    County = NAME,
+    `Median Income (Estimate)` = median_incomeE,
+    `MOE %` = income_moe_pct,
+    `Reliability` = reliability
+  )
+
+# Display the selected counties with their key characteristics
+# Show: county name, median income, MOE percentage, reliability category
+selected_counties
+```
+
+::: {.cell-output .cell-output-stdout}
+
+```
+# A tibble: 3 × 4
+  County    `Median Income (Estimate)` `MOE %` Reliability        
+  <chr>                          <dbl>   <dbl> <chr>              
+1 Buchanan                       58303    5.07 Moderate Confidence
+2 St. Louis                      78067    1.64 High Confidence    
+3 Texas                          42870   11.4  Low Confidence     
+```
+
+
+:::
+:::
+
+
+**Comment on the output:** I selected St. Louis, Buchanan, and Texas counties to represent high, moderate, and low data reliability contexts—urban, mid-sized, and rural areas, respectively. 
+
+## 3.2 Tract-Level Demographics
+
+**Your Task:** Get demographic data for census tracts in your selected counties.
+
+**Requirements:**
+- Geography: tract level
+- Variables: white alone (B03002_003), Black/African American (B03002_004), Hispanic/Latino (B03002_012), total population (B03002_001)
+- Use the same state and year as before
+- Output format: wide
+- **Challenge:** You'll need county codes, not names. Look at the GEOID patterns in your county data for hints.
+
+
+::: {.cell}
+
+```{.r .cell-code}
+# Define your race/ethnicity variables with descriptive names
+race_vars <- c(
+  total_pop = "B03002_001",
+  white     = "B03002_003",
+  black     = "B03002_004",
+  hispanic  = "B03002_012"
+)
+
+# Use get_acs() to retrieve tract-level data
+# Hint: You may need to specify county codes in the county parameter
+county_codes <- income_reliability %>%
+  filter(NAME %in% selected_counties$County) %>%
+  transmute(county_code = str_sub(GEOID, 3, 5)) %>%
+  distinct() %>%
+  pull(county_code)
+tract_demo_raw <- get_acs(
+  geography = "tract",
+  state     = my_state,
+  county    = county_codes,
+  variables = race_vars,
+  year      = 2022,
+  survey    = "acs5",
+  output    = "wide"
+)
+
+
+# Create percentages for white, Black, and Hispanic populations
+tract_demo <- tract_demo_raw %>%
+  mutate(
+    white_pct    = if_else(total_popE > 0, 100 * whiteE   / total_popE, NA_real_),
+    black_pct    = if_else(total_popE > 0, 100 * blackE   / total_popE, NA_real_),
+    hispanic_pct = if_else(total_popE > 0, 100 * hispanicE/ total_popE, NA_real_),
+    total_population = total_popE,
+    tract_name   = str_extract(NAME, "Census Tract[^,]+"),
+    county_name  = str_extract(NAME, "Census Tract[^,]+")) %>%
+  select(
+    GEOID, tract_name, county_name,
+    total_population, whiteE, blackE, hispanicE,
+    white_pct, black_pct, hispanic_pct
+  )
+
+
+tract_demo <- tract_demo %>%
+  mutate(
+    county_name = county_name %>%
+      str_replace_all(",", ";") %>%
+      { str_split_fixed(., ";", 3)[, 2] } %>%
+      str_trim()
+  )
+
+# Add readable tract and county name columns using str_extract() or similar
+kable(
+  head(tract_demo, 10),
+  caption = "Selected Counties: Tract-Level Race/Ethnicity (ACS 2018–2022)"
+)
+```
+
+::: {.cell-output-display}
+
+
+Table: Selected Counties: Tract-Level Race/Ethnicity (ACS 2018–2022)
+
+|GEOID       |tract_name                                   |county_name     | total_population| whiteE| blackE| hispanicE| white_pct| black_pct| hispanic_pct|
+|:-----------|:--------------------------------------------|:---------------|----------------:|------:|------:|---------:|---------:|---------:|------------:|
+|29021000100 |Census Tract 1; Buchanan County; Missouri    |Buchanan County |             5914|   4906|    265|       123|  82.95570|  4.480893|     2.079811|
+|29021000200 |Census Tract 2; Buchanan County; Missouri    |Buchanan County |             4522|   3369|    100|       622|  74.50243|  2.211411|    13.754976|
+|29021000300 |Census Tract 3; Buchanan County; Missouri    |Buchanan County |             2571|   2030|     75|       283|  78.95760|  2.917153|    11.007390|
+|29021000400 |Census Tract 4; Buchanan County; Missouri    |Buchanan County |             1444|   1205|     43|        57|  83.44875|  2.977839|     3.947368|
+|29021000500 |Census Tract 5; Buchanan County; Missouri    |Buchanan County |             3077|   2453|     96|       399|  79.72051|  3.119922|    12.967176|
+|29021000600 |Census Tract 6; Buchanan County; Missouri    |Buchanan County |             4836|   3535|    496|       288|  73.09760| 10.256410|     5.955335|
+|29021000701 |Census Tract 7.01; Buchanan County; Missouri |Buchanan County |             4567|   3554|    387|       505|  77.81914|  8.473834|    11.057587|
+|29021000702 |Census Tract 7.02; Buchanan County; Missouri |Buchanan County |             4198|   3475|    226|       201|  82.77751|  5.383516|     4.787994|
+|29021000900 |Census Tract 9; Buchanan County; Missouri    |Buchanan County |             4500|   3432|    431|       382|  76.26667|  9.577778|     8.488889|
+|29021001000 |Census Tract 10; Buchanan County; Missouri   |Buchanan County |             2149|   1456|    382|       161|  67.75244| 17.775710|     7.491857|
+
+
+:::
+:::
+
+
+## 3.3 Demographic Analysis
+
+**Your Task:** Analyze the demographic patterns in your selected areas.
+
+
+::: {.cell}
+
+```{.r .cell-code}
+# Find the tract with the highest percentage of Hispanic/Latino residents
+# Hint: use arrange() and slice() to get the top tract
+top_hispanic_tract <- tract_demo %>%
+  arrange(desc(hispanic_pct)) %>%
+  slice(1) %>%
+  select(
+    GEOID, tract_name, county_name, total_population,
+    white_pct, black_pct, hispanic_pct
+  )
+
+kable(
+  top_hispanic_tract,
+  caption = "Tract with Highest Hispanic/Latino Percentage (Selected Counties)"
+)
+```
+
+::: {.cell-output-display}
+
+
+Table: Tract with Highest Hispanic/Latino Percentage (Selected Counties)
+
+|GEOID       |tract_name                                    |county_name      | total_population| white_pct| black_pct| hispanic_pct|
+|:-----------|:---------------------------------------------|:----------------|----------------:|---------:|---------:|------------:|
+|29189214700 |Census Tract 2147; St. Louis County; Missouri |St. Louis County |             8305|  43.66045|  18.81999|     32.51054|
+
+
+:::
+
+```{.r .cell-code}
+# Calculate average demographics by county using group_by() and summarize()
+county_summary_unweighted <- tract_demo %>%
+  group_by(county_name) %>%
+  summarise(
+    n_tracts = n(),
+    avg_white_pct    = mean(white_pct,    na.rm = TRUE),
+    avg_black_pct    = mean(black_pct,    na.rm = TRUE),
+    avg_hispanic_pct = mean(hispanic_pct, na.rm = TRUE)
+  ) %>%
+  arrange(desc(avg_hispanic_pct))
+
+# Show: number of tracts, average percentage for each racial/ethnic group
+# Create a nicely formatted table of your results using kable()
+kable(
+  county_summary_unweighted,
+  caption = "Average Demographics by County"
+)
+```
+
+::: {.cell-output-display}
+
+
+Table: Average Demographics by County
+
+|county_name      | n_tracts| avg_white_pct| avg_black_pct| avg_hispanic_pct|
+|:----------------|--------:|-------------:|-------------:|----------------:|
+|Buchanan County  |       26|      80.95432|      5.691374|         7.305424|
+|St. Louis County |      236|      61.42962|     26.113783|         3.002732|
+|Texas County     |        8|      90.21293|      1.883072|         2.467462|
+
+
+:::
+:::
+
+
+# Part 4: Comprehensive Data Quality Evaluation
+
+## 4.1 MOE Analysis for Demographic Variables
+
+**Your Task:** Examine margins of error for demographic variables to see if some communities have less reliable data.
+
+**Requirements:**
+- Calculate MOE percentages for each demographic variable
+- Flag tracts where any demographic variable has MOE > 15%
+- Create summary statistics
+
+
+::: {.cell}
+
+```{.r .cell-code}
+# Calculate MOE percentages for white, Black, and Hispanic variables
+# Hint: use the same formula as before (margin/estimate * 100)
+moe_pct <- tract_demo_raw %>%
+  transmute(
+    GEOID,
+    white_moe_pct    = if_else(whiteE    > 0, 100 * whiteM    / whiteE,    NA_real_),
+    black_moe_pct    = if_else(blackE    > 0, 100 * blackM    / blackE,    NA_real_),
+    hispanic_moe_pct = if_else(hispanicE > 0, 100 * hispanicM / hispanicE, NA_real_)
+  )
+
+# Create a flag for tracts with high MOE on any demographic variable
+# Use logical operators (| for OR) in an ifelse() statement
+tract_quality <- tract_demo %>%
+  select(GEOID, county_name, tract_name, total_population,
+         white_pct, black_pct, hispanic_pct) %>%
+  left_join(moe_pct, by = "GEOID") %>%
+  mutate(
+    high_moe_flag = ifelse(
+      coalesce(white_moe_pct    > 50, FALSE) |
+      coalesce(black_moe_pct    > 50, FALSE) |
+      coalesce(hispanic_moe_pct > 50, FALSE),
+      TRUE, FALSE
+    )
+  )
+
+# Create summary statistics showing how many tracts have data quality issues
+overall_summary <- tract_quality %>%
+  summarise(
+    n_tracts       = n(),
+    n_high_moe     = sum(high_moe_flag, na.rm = TRUE),
+    share_high_moe = round(100 * n_high_moe / n_tracts, 1)
+  )
+kable(overall_summary, caption = "Overall count and share of high-MOE tracts")
+```
+
+::: {.cell-output-display}
+
+
+Table: Overall count and share of high-MOE tracts
+
+| n_tracts| n_high_moe| share_high_moe|
+|--------:|----------:|--------------:|
+|      270|        255|           94.4|
+
+
+:::
+
+```{.r .cell-code}
+county_summary <- tract_quality %>%
+  group_by(county_name) %>%
+  summarise(
+    n_tracts       = n(),
+    n_high_moe     = sum(high_moe_flag, na.rm = TRUE),
+    share_high_moe = round(100 * n_high_moe / n_tracts, 1)
+  ) %>%
+  arrange(desc(share_high_moe), desc(n_high_moe))
+kable(county_summary, caption = "High-MOE tracts by county")
+```
+
+::: {.cell-output-display}
+
+
+Table: High-MOE tracts by county
+
+|county_name      | n_tracts| n_high_moe| share_high_moe|
+|:----------------|--------:|----------:|--------------:|
+|Buchanan County  |       26|         26|          100.0|
+|St. Louis County |      236|        223|           94.5|
+|Texas County     |        8|          6|           75.0|
+
+
+:::
+:::
+
+
+## 4.2 Pattern Analysis
+
+**Your Task:** Investigate whether data quality problems are randomly distributed or concentrated in certain types of communities.
+
+
+::: {.cell}
+
+```{.r .cell-code}
+# Group tracts by whether they have high MOE issues
+# Calculate average characteristics for each group:
+# - population size, demographic percentages
+pattern_summary <- tract_quality %>%
+  group_by(high_moe_flag) %>%
+  summarise(
+    n_tracts          = n(),
+    avg_population    = mean(total_population, na.rm = TRUE),
+    avg_white_pct     = mean(white_pct, na.rm = TRUE),
+    avg_black_pct     = mean(black_pct, na.rm = TRUE),
+    avg_hispanic_pct  = mean(hispanic_pct, na.rm = TRUE)
+  )
+
+# Use group_by() and summarize() to create this comparison
+# Create a professional table showing the patterns
+kable(
+  pattern_summary,
+  caption = "Comparison of Community Characteristics by Data Quality Flag"
+)
+```
+
+::: {.cell-output-display}
+
+
+Table: Comparison of Community Characteristics by Data Quality Flag
+
+|high_moe_flag | n_tracts| avg_population| avg_white_pct| avg_black_pct| avg_hispanic_pct|
+|:-------------|--------:|--------------:|-------------:|-------------:|----------------:|
+|FALSE         |       15|       4488.133|      35.73905|      53.43592|         4.259571|
+|TRUE          |      255|       4085.306|      65.83459|      21.66414|         3.350713|
+
+
+:::
+:::
+
+
+**Pattern Analysis:** [Describe any patterns you observe. Do certain types of communities have less reliable data? What might explain this?]
+
+
+# Part 5: Policy Recommendations
+
+## 5.1 Analysis Integration and Professional Summary
+
+**Your Task:** Write an executive summary that integrates findings from all four analyses.
+
+**Executive Summary Requirements:**
+1. **Overall Pattern Identification**: What are the systematic patterns across all your analyses?
+2. **Equity Assessment**: Which communities face the greatest risk of algorithmic bias based on your findings?
+3. **Root Cause Analysis**: What underlying factors drive both data quality issues and bias risk?
+4. **Strategic Recommendations**: What should the Department implement to address these systematic issues?
+
+**Executive Summary:**
+
+[Your integrated 4-paragraph summary here]
+
+## 6.3 Specific Recommendations
+
+**Your Task:** Create a decision framework for algorithm implementation.
+
+
+::: {.cell}
+
+```{.r .cell-code}
+# Create a summary table using your county reliability data
+# Include: county name, median income, MOE percentage, reliability category
+
+# Add a new column with algorithm recommendations using case_when():
+# - High Confidence: "Safe for algorithmic decisions"
+# - Moderate Confidence: "Use with caution - monitor outcomes"  
+# - Low Confidence: "Requires manual review or additional data"
+
+# Format as a professional table with kable()
+```
+:::
+
+
+**Key Recommendations:**
+
+**Your Task:** Use your analysis results to provide specific guidance to the department.
+
+1. **Counties suitable for immediate algorithmic implementation:** [List counties with high confidence data and explain why they're appropriate]
+
+2. **Counties requiring additional oversight:** [List counties with moderate confidence data and describe what kind of monitoring would be needed]
+
+3. **Counties needing alternative approaches:** [List counties with low confidence data and suggest specific alternatives - manual review, additional surveys, etc.]
+
+## Questions for Further Investigation
+
+[List 2-3 questions that your analysis raised that you'd like to explore further in future assignments. Consider questions about spatial patterns, time trends, or other demographic factors.]
+
+# Technical Notes
+
+**Data Sources:** 
+- U.S. Census Bureau, American Community Survey 2018-2022 5-Year Estimates
+- Retrieved via tidycensus R package on [date]
+
+**Reproducibility:** 
+- All analysis conducted in R version [your version]
+- Census API key required for replication
+- Complete code and documentation available at: [your portfolio URL]
+
+**Methodology Notes:**
+[Describe any decisions you made about data processing, county selection, or analytical choices that might affect reproducibility]
+
+**Limitations:**
+[Note any limitations in your analysis - sample size issues, geographic scope, temporal factors, etc.]
+
+---
+
+## Submission Checklist
+
+Before submitting your portfolio link on Canvas:
+
+- [ ] All code chunks run without errors
+- [ ] All "[Fill this in]" prompts have been completed
+- [ ] Tables are properly formatted and readable
+- [ ] Executive summary addresses all four required components
+- [ ] Portfolio navigation includes this assignment
+- [ ] Census API key is properly set 
+- [ ] Document renders correctly to HTML
+
+**Remember:** Submit your portfolio URL on Canvas, not the file itself. Your assignment should be accessible at `your-portfolio-url/assignments/assignment_1/your_file_name.html`
