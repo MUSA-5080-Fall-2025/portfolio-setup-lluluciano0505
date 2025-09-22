@@ -20,6 +20,9 @@ website:
             text: Lab 0
           - href: Labs/lab_1/assignment1_template.qmd
             text: Lab 1
+        menu:
+          - href: assignments/assignment_1/assignment1_template.qmd
+            text: Assignment 1
 
 format:
   html:
