@@ -7,7 +7,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 <meta name="author" content="Luciano">
-<meta name="dcterms.date" content="2025-09-18">
+<meta name="dcterms.date" content="2025-09-22">
 
 <title>Assignment 1: Census Data Quality for Policy Decisions – Luciano Lu - MUSA 5080 Portfolio</title>
 <style>
@@ -238,7 +238,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
     <div>
     <div class="quarto-title-meta-heading">Published</div>
     <div class="quarto-title-meta-contents">
-      <p class="date">September 18, 2025</p>
+      <p class="date">September 22, 2025</p>
     </div>
   </div>
   
@@ -876,9 +876,9 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb15-16"><a href="#cb15-16" aria-hidden="true" tabindex="-1"></a>  <span class="fu">left_join</span>(moe_pct, <span class="at">by =</span> <span class="st">"GEOID"</span>) <span class="sc">%&gt;%</span></span>
 <span id="cb15-17"><a href="#cb15-17" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
 <span id="cb15-18"><a href="#cb15-18" aria-hidden="true" tabindex="-1"></a>    <span class="at">high_moe_flag =</span> <span class="fu">ifelse</span>(</span>
-<span id="cb15-19"><a href="#cb15-19" aria-hidden="true" tabindex="-1"></a>      <span class="fu">coalesce</span>(white_moe_pct    <span class="sc">&gt;</span> <span class="dv">30</span>, <span class="cn">FALSE</span>) <span class="sc">|</span></span>
-<span id="cb15-20"><a href="#cb15-20" aria-hidden="true" tabindex="-1"></a>      <span class="fu">coalesce</span>(black_moe_pct    <span class="sc">&gt;</span> <span class="dv">30</span>, <span class="cn">FALSE</span>) <span class="sc">|</span></span>
-<span id="cb15-21"><a href="#cb15-21" aria-hidden="true" tabindex="-1"></a>      <span class="fu">coalesce</span>(hispanic_moe_pct <span class="sc">&gt;</span> <span class="dv">30</span>, <span class="cn">FALSE</span>),</span>
+<span id="cb15-19"><a href="#cb15-19" aria-hidden="true" tabindex="-1"></a>      <span class="fu">coalesce</span>(white_moe_pct    <span class="sc">&gt;</span> <span class="dv">50</span>, <span class="cn">FALSE</span>) <span class="sc">|</span></span>
+<span id="cb15-20"><a href="#cb15-20" aria-hidden="true" tabindex="-1"></a>      <span class="fu">coalesce</span>(black_moe_pct    <span class="sc">&gt;</span> <span class="dv">50</span>, <span class="cn">FALSE</span>) <span class="sc">|</span></span>
+<span id="cb15-21"><a href="#cb15-21" aria-hidden="true" tabindex="-1"></a>      <span class="fu">coalesce</span>(hispanic_moe_pct <span class="sc">&gt;</span> <span class="dv">50</span>, <span class="cn">FALSE</span>),</span>
 <span id="cb15-22"><a href="#cb15-22" aria-hidden="true" tabindex="-1"></a>      <span class="cn">TRUE</span>, <span class="cn">FALSE</span></span>
 <span id="cb15-23"><a href="#cb15-23" aria-hidden="true" tabindex="-1"></a>    )</span>
 <span id="cb15-24"><a href="#cb15-24" aria-hidden="true" tabindex="-1"></a>  )</span>
@@ -904,8 +904,8 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <tbody>
 <tr class="odd">
 <td style="text-align: right;">270</td>
-<td style="text-align: right;">266</td>
-<td style="text-align: right;">98.5</td>
+<td style="text-align: right;">255</td>
+<td style="text-align: right;">94.4</td>
 </tr>
 </tbody>
 </table>
@@ -940,14 +940,14 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <tr class="even">
 <td style="text-align: left;">St.&nbsp;Louis County</td>
 <td style="text-align: right;">236</td>
-<td style="text-align: right;">233</td>
-<td style="text-align: right;">98.7</td>
+<td style="text-align: right;">223</td>
+<td style="text-align: right;">94.5</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;">Texas County</td>
 <td style="text-align: right;">8</td>
-<td style="text-align: right;">7</td>
-<td style="text-align: right;">87.5</td>
+<td style="text-align: right;">6</td>
+<td style="text-align: right;">75.0</td>
 </tr>
 </tbody>
 </table>
@@ -1001,19 +1001,19 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <tbody>
 <tr class="odd">
 <td style="text-align: left;">FALSE</td>
-<td style="text-align: right;">4</td>
-<td style="text-align: right;">4114.500</td>
-<td style="text-align: right;">45.61392</td>
-<td style="text-align: right;">49.71624</td>
-<td style="text-align: right;">0.000000</td>
+<td style="text-align: right;">15</td>
+<td style="text-align: right;">4488.133</td>
+<td style="text-align: right;">35.73905</td>
+<td style="text-align: right;">53.43592</td>
+<td style="text-align: right;">4.259571</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">TRUE</td>
-<td style="text-align: right;">266</td>
-<td style="text-align: right;">4107.583</td>
-<td style="text-align: right;">64.44155</td>
-<td style="text-align: right;">23.03394</td>
-<td style="text-align: right;">3.452352</td>
+<td style="text-align: right;">255</td>
+<td style="text-align: right;">4085.306</td>
+<td style="text-align: right;">65.83459</td>
+<td style="text-align: right;">21.66414</td>
+<td style="text-align: right;">3.350713</td>
 </tr>
 </tbody>
 </table>

@@ -351,9 +351,9 @@ tract_quality <- tract_demo %>%
   left_join(moe_pct, by = "GEOID") %>%
   mutate(
     high_moe_flag = ifelse(
-      coalesce(white_moe_pct    > 30, FALSE) |
-      coalesce(black_moe_pct    > 30, FALSE) |
-      coalesce(hispanic_moe_pct > 30, FALSE),
+      coalesce(white_moe_pct    > 50, FALSE) |
+      coalesce(black_moe_pct    > 50, FALSE) |
+      coalesce(hispanic_moe_pct > 50, FALSE),
       TRUE, FALSE
     )
   )
