@@ -95,14 +95,14 @@
     "href": "assignments/assignment_1/assignment1_template.html#specific-recommendations",
     "title": "Assignment 1: Census Data Quality for Policy Decisions",
     "section": "6.3 Specific Recommendations",
-    "text": "6.3 Specific Recommendations\nYour Task: Create a decision framework for algorithm implementation.\n\n# Create a summary table using your county reliability data\n# Include: county name, median income, MOE percentage, reliability category\n\n# Add a new column with algorithm recommendations using case_when():\n# - High Confidence: \"Safe for algorithmic decisions\"\n# - Moderate Confidence: \"Use with caution - monitor outcomes\"  \n# - Low Confidence: \"Requires manual review or additional data\"\nrecommendations &lt;- income_reliability %&gt;%\n  mutate(\n    recommendation = case_when(\n      reliability == \"High Confidence\" ~ \"Safe for algorithmic decisions\",\n      reliability == \"Moderate Confidence\" ~ \"Use with caution - monitor outcomes\",\n      reliability == \"Low Confidence\" ~ \"Requires manual review or additional data\",\n      TRUE ~ NA_character_\n    )\n  ) %&gt;%\n  select(\n    County = NAME,\n    `Median Income (Estimate)` = median_incomeE,\n    `MOE %` = income_moe_pct,\n    `Reliability` = reliability,\n    Recommendation = recommendation\n  )\n\nkable(\n  head(recommendations, 10),\n  caption = \"Decision Framework for Algorithm Implementation\"\n)\n\n\nDecision Framework for Algorithm Implementation\n\n\n\n\n\n\n\n\n\nCounty\nMedian Income (Estimate)\nMOE %\nReliability\nRecommendation\n\n\n\n\nAdair\n51020\n8.682870\nModerate Confidence\nUse with caution - monitor outcomes\n\n\nAndrew\n68774\n6.944485\nModerate Confidence\nUse with caution - monitor outcomes\n\n\nAtchison\n58521\n6.298594\nModerate Confidence\nUse with caution - monitor outcomes\n\n\nAudrain\n51745\n4.462267\nHigh Confidence\nSafe for algorithmic decisions\n\n\nBarry\n55592\n9.686646\nModerate Confidence\nUse with caution - monitor outcomes\n\n\nBarton\n48105\n11.591311\nLow Confidence\nRequires manual review or additional data\n\n\nBates\n54122\n9.574665\nModerate Confidence\nUse with caution - monitor outcomes\n\n\nBenton\n50229\n7.722630\nModerate Confidence\nUse with caution - monitor outcomes\n\n\nBollinger\n52306\n16.525829\nLow Confidence\nRequires manual review or additional data\n\n\nBoone\n66564\n2.665104\nHigh Confidence\nSafe for algorithmic decisions\n\n\n\n\n# Format as a professional table with kable()\n\nKey Recommendations:\nYour Task: Use your analysis results to provide specific guidance to the department.\n\nCounties suitable for immediate algorithmic implementation: [List counties with high confidence data and explain why they’re appropriate]\nCounties requiring additional oversight: [List counties with moderate confidence data and describe what kind of monitoring would be needed]\nCounties needing alternative approaches: [List counties with low confidence data and suggest specific alternatives - manual review, additional surveys, etc.]"
+    "text": "6.3 Specific Recommendations\nYour Task: Create a decision framework for algorithm implementation.\n\n# Create a summary table using your county reliability data\n# Include: county name, median income, MOE percentage, reliability category\n\n# Add a new column with algorithm recommendations using case_when():\n# - High Confidence: \"Safe for algorithmic decisions\"\n# - Moderate Confidence: \"Use with caution - monitor outcomes\"  \n# - Low Confidence: \"Requires manual review or additional data\"\nrecommendations &lt;- income_reliability %&gt;%\n  mutate(\n    recommendation = case_when(\n      reliability == \"High Confidence\" ~ \"Safe for algorithmic decisions\",\n      reliability == \"Moderate Confidence\" ~ \"Use with caution - monitor outcomes\",\n      reliability == \"Low Confidence\" ~ \"Requires manual review or additional data\",\n      TRUE ~ NA_character_\n    )\n  ) %&gt;%\n  select(\n    County = NAME,\n    `Median Income (Estimate)` = median_incomeE,\n    `MOE %` = income_moe_pct,\n    `Reliability` = reliability,\n    Recommendation = recommendation\n  )\n\nkable(\n  head(recommendations, 10),\n  caption = \"Decision Framework for Algorithm Implementation\"\n)\n\n\nDecision Framework for Algorithm Implementation\n\n\n\n\n\n\n\n\n\nCounty\nMedian Income (Estimate)\nMOE %\nReliability\nRecommendation\n\n\n\n\nAdair\n51020\n8.682870\nModerate Confidence\nUse with caution - monitor outcomes\n\n\nAndrew\n68774\n6.944485\nModerate Confidence\nUse with caution - monitor outcomes\n\n\nAtchison\n58521\n6.298594\nModerate Confidence\nUse with caution - monitor outcomes\n\n\nAudrain\n51745\n4.462267\nHigh Confidence\nSafe for algorithmic decisions\n\n\nBarry\n55592\n9.686646\nModerate Confidence\nUse with caution - monitor outcomes\n\n\nBarton\n48105\n11.591311\nLow Confidence\nRequires manual review or additional data\n\n\nBates\n54122\n9.574665\nModerate Confidence\nUse with caution - monitor outcomes\n\n\nBenton\n50229\n7.722630\nModerate Confidence\nUse with caution - monitor outcomes\n\n\nBollinger\n52306\n16.525829\nLow Confidence\nRequires manual review or additional data\n\n\nBoone\n66564\n2.665104\nHigh Confidence\nSafe for algorithmic decisions\n\n\n\n\n# Format as a professional table with kable()\n\nKey Recommendations:\nYour Task: Use your analysis results to provide specific guidance to the department.\n\nCounties suitable for immediate algorithmic implementation: Major metropolitan and other large counties with reliable data (High Confidence). For Missouri, these include places like St. Louis County, St. Louis City, Jackson County, St. Charles County, Clay County, Greene County, and a few others. These areas have MOEs well under 5% for key metrics. The department can confidently use the algorithm to drive decisions in these locales because any ranking or prioritization based on ACS data is grounded in fairly accurate information.\nCounties requiring additional oversight: Mid-sized or somewhat smaller counties with moderate data confidence. This list might include Buchanan, Boone, Cole, Jasper, Newton, Platte, Cape Girardeau, etc., roughly counties with populations in the few tens of thousands up to around 100k. In these cases, the algorithm’s output should be reviewed by staff. For instance, if the algorithm ranks Buchanan County as the 10th highest need, because of moderate MOE, staff might double-check recent economic conditions in Buchanan (maybe there was a plant closure not reflected fully in the 2018–2022 data, or maybe the MOE means it could actually rank 8th or 12th). For example, if funds were given to a county for outreach but uptake is low, was it because the need was overestimated? Or if a county not prioritized starts showing signs of distress, was it an oversight due to data noise? Essentially\nCounties needing alternative approaches: Counties with low confidence data (mostly rural counties and those flagged earlier like Shannon, Carter, Ozark, Mississippi, Mercer, and many others). In these cases, I recommend manual review and supplementary analysis as a prerequisite for decision-making. The algorithm might initially rank these places oddly (perhaps not high need because of an overestimated median income or not low need because of a weird population estimate).\n\n\nLook at local poverty indicators (e.g., school district free lunch percentages, local food pantry demand).\nConsult qualitative reports (maybe county commissioners or local non-profits can speak to the community’s situation).\nPossibly use regional grouping: If one county’s data is flaky, consider looking at a cluster of surrounding similar counties to infer needs."
   },
   {
     "objectID": "assignments/assignment_1/assignment1_template.html#questions-for-further-investigation",
     "href": "assignments/assignment_1/assignment1_template.html#questions-for-further-investigation",
     "title": "Assignment 1: Census Data Quality for Policy Decisions",
     "section": "Questions for Further Investigation",
-    "text": "Questions for Further Investigation\n[List 2-3 questions that your analysis raised that you’d like to explore further in future assignments. Consider questions about spatial patterns, time trends, or other demographic factors.]"
+    "text": "Questions for Further Investigation\n\nWe observed that many of the highest-MOE counties cluster in certain regions (e.g., the Ozarks). A deeper spatial analysis could reveal regional trends. So, are there geographic clusters of poor data quality?\nIt would be insightful to examine if data reliability is improving or worsening over time. For instance, how do the 2018–2022 ACS margins of error compare to 2010–2014 ACS for these same counties?\nWe focused on median income and a few racial groups. What about other variables that an algorithm might use? For example, poverty rates, unemployment rates, education levels, or age distributions by tract/county.\nwhat factors best predict high MOE or data issues? Our analysis suggests population size and homogeneity are factors. We could formally test correlations: e.g., does a lower response rate or a higher proportion of rental housing correlate with higher MOEs?"
   },
   {
     "objectID": "assignments/assignment_1/assignment1_template.html#submission-checklist",
@@ -278,5 +278,40 @@
     "title": "Week 1 Notes - Course Introduction",
     "section": "Reflection",
     "text": "Reflection\n\nLearned how to set up a portfolio website using Quarto and GitHub\nGot familiar with basic Git commands and workflow"
+  },
+  {
+    "objectID": "index.html",
+    "href": "index.html",
+    "title": "MUSA 5080 Portfolio",
+    "section": "",
+    "text": "This portfolio documents my learning journey in Public Policy Analytics (MUSA 5080).\n\n\nAdvanced spatial analysis and data science for urban planning and public policy.\n\n\n\n\nWeekly Notes: My learning reflections and key concepts\nLabs: Completed assignments and analyses\nFinal Project: Capstone modeling challenge\n\n\n\n\nHi I am Luciano. Welcome to my portfolio page.\n\n\n\n\nEmail: lu25@upenn.edu\nGitHub: lluluciano0505"
+  },
+  {
+    "objectID": "index.html#about-this-course",
+    "href": "index.html#about-this-course",
+    "title": "MUSA 5080 Portfolio",
+    "section": "",
+    "text": "Advanced spatial analysis and data science for urban planning and public policy."
+  },
+  {
+    "objectID": "index.html#portfolio-structure",
+    "href": "index.html#portfolio-structure",
+    "title": "MUSA 5080 Portfolio",
+    "section": "",
+    "text": "Weekly Notes: My learning reflections and key concepts\nLabs: Completed assignments and analyses\nFinal Project: Capstone modeling challenge"
+  },
+  {
+    "objectID": "index.html#about-me",
+    "href": "index.html#about-me",
+    "title": "MUSA 5080 Portfolio",
+    "section": "",
+    "text": "Hi I am Luciano. Welcome to my portfolio page."
+  },
+  {
+    "objectID": "index.html#contact",
+    "href": "index.html#contact",
+    "title": "MUSA 5080 Portfolio",
+    "section": "",
+    "text": "Email: lu25@upenn.edu\nGitHub: lluluciano0505"
   }
 ]
