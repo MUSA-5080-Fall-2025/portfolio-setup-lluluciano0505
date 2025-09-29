@@ -1041,7 +1041,9 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <p><strong>Executive Summary Requirements:</strong> 1. <strong>Overall Pattern Identification</strong>: What are the systematic patterns across all your analyses? 2. <strong>Equity Assessment</strong>: Which communities face the greatest risk of algorithmic bias based on your findings? 3. <strong>Root Cause Analysis</strong>: What underlying factors drive both data quality issues and bias risk? 4. <strong>Strategic Recommendations</strong>: What should the Department implement to address these systematic issues?</p>
 <p><strong>Executive Summary:</strong></p>
 <p>The analysis shows that data reliability problems are not randomly distributed but concentrated in specific variables and geographies. At the county level, median household income estimates (B19013_001) exhibit much higher margins of error in small, rural counties: Shannon (21.2%), Carter (18.6%), Mississippi (18.5%), Ozark (18.1%), and Mercer (18.1%) all far exceed the 10% threshold, while larger metropolitan counties such as St.&nbsp;Louis report far lower error rates (1.64%). At the tract level, racial and ethnic variables (B03002) are especially unstable when minority group counts are small. Using a 50% MOE threshold, 94.4% of tracts were flagged as high-MOE, with Black and Hispanic estimates most often responsible for the flag. This pattern is stark in predominantly white, rural counties such as Buchanan (100% of tracts flagged) and Texas (75%), where Black and Hispanic groups make up less than 10% of the population. Even in St.&nbsp;Louis County, where the sample base is larger, 94.5% of tracts still exceeded the threshold, largely because Hispanic residents constitute only 3% of the county population.</p>
-<p>Because algorithms allocate resources based on point estimates without accounting for their uncertainty, unstable figures can translate directly into misclassification. In rural tracts with very small Black or Hispanic populations, ACS samples often produce highly volatile estimates. An algorithm that interprets these values at face value may conclude that such communities have little or no need for targeted services, even when real needs exist. Conversely, areas where small samples happen to inflate minority counts could be over-prioritized. The core risk is that statistical noise is treated as social reality, leaving already vulnerable groups more exposed to under-investment.</p>
+<p>Because algorithms allocate resources based on point estimates without accounting for their uncertainty, unstable figures can translate directly into misclassification. In rural tracts with very small Black or Hispanic populations, ACS samples often produce highly volatile estimates. An algorithm that interprets these values at face value may conclude that such communities have little or no need for targeted services, even when real needs exist. Conversely, areas where small samples happen to inflate minority counts could be over-prioritized. The core risk is that statistical noise is treated as social reality, where parts of the already vulnerable groups are more exposed to under-investment.</p>
+<p>The ACS is a very sample survey. 1. For a large city or county, hundreds of households might be surveyed, with estimate of median income and demographic counts. For a tiny county, only a handful of households are surveyed; 2. When a population has a dominant majority and a few minority members, the minority data will have high variance. Missouri’s rural counties often have very few minority residents, and thus data about those residents is scant and uncertain. If the algorithm tries to pinpoint, say, where to fund a minority outreach program, it might miss small communities entirely due to these data gaps. 3. Some communities (e.g., very low-income households, remote rural residents, certain ethnic minorities, immigrants) have historically lower response rates to the census and surveys. Language barriers, distrust in government, or simply being hard to reach (like no internet, P.O. box addresses, etc.) can lead to undercounting. That means the ACS might not just have statistical uncertainty, but actual systematic bias in who is represented.</p>
+<p>The algorithm should not treat all data points equally. Wherever possible, include the margin of error or a confidence weight in the algorithm’s calculations. For example, if ranking counties by median income (lowest income = highest need), adjust the ranking to account for MOE. A county with an income of $40k ± $8k should be considered as uncertain and perhaps be grouped with counties that have say $35k median ± $2k, rather than confidently placing it above or below them. Set rules that flag communities (counties or tracts) with low data confidence for manual review. If the data is too poor, don’t let the algorithm alone make the call. For instance, the algorithm could produce a preliminary list of priority areas but mark any area with “Low Confidence” data (like those &gt;10% MOE counties, or tracts with &gt;50% MOE on key stats) for human analysts to double-check. This ensures places like Shannon County or Texas County are not ignored just because of shaky data.</p>
 </section>
 <section id="specific-recommendations" class="level2">
 <h2 class="anchored" data-anchor-id="specific-recommendations">6.3 Specific Recommendations</h2>
@@ -1054,8 +1056,121 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb18-5"><a href="#cb18-5" aria-hidden="true" tabindex="-1"></a><span class="co"># - High Confidence: "Safe for algorithmic decisions"</span></span>
 <span id="cb18-6"><a href="#cb18-6" aria-hidden="true" tabindex="-1"></a><span class="co"># - Moderate Confidence: "Use with caution - monitor outcomes"  </span></span>
 <span id="cb18-7"><a href="#cb18-7" aria-hidden="true" tabindex="-1"></a><span class="co"># - Low Confidence: "Requires manual review or additional data"</span></span>
-<span id="cb18-8"><a href="#cb18-8" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb18-9"><a href="#cb18-9" aria-hidden="true" tabindex="-1"></a><span class="co"># Format as a professional table with kable()</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb18-8"><a href="#cb18-8" aria-hidden="true" tabindex="-1"></a>recommendations <span class="ot">&lt;-</span> income_reliability <span class="sc">%&gt;%</span></span>
+<span id="cb18-9"><a href="#cb18-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
+<span id="cb18-10"><a href="#cb18-10" aria-hidden="true" tabindex="-1"></a>    <span class="at">recommendation =</span> <span class="fu">case_when</span>(</span>
+<span id="cb18-11"><a href="#cb18-11" aria-hidden="true" tabindex="-1"></a>      reliability <span class="sc">==</span> <span class="st">"High Confidence"</span> <span class="sc">~</span> <span class="st">"Safe for algorithmic decisions"</span>,</span>
+<span id="cb18-12"><a href="#cb18-12" aria-hidden="true" tabindex="-1"></a>      reliability <span class="sc">==</span> <span class="st">"Moderate Confidence"</span> <span class="sc">~</span> <span class="st">"Use with caution - monitor outcomes"</span>,</span>
+<span id="cb18-13"><a href="#cb18-13" aria-hidden="true" tabindex="-1"></a>      reliability <span class="sc">==</span> <span class="st">"Low Confidence"</span> <span class="sc">~</span> <span class="st">"Requires manual review or additional data"</span>,</span>
+<span id="cb18-14"><a href="#cb18-14" aria-hidden="true" tabindex="-1"></a>      <span class="cn">TRUE</span> <span class="sc">~</span> <span class="cn">NA_character_</span></span>
+<span id="cb18-15"><a href="#cb18-15" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb18-16"><a href="#cb18-16" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
+<span id="cb18-17"><a href="#cb18-17" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(</span>
+<span id="cb18-18"><a href="#cb18-18" aria-hidden="true" tabindex="-1"></a>    <span class="at">County =</span> NAME,</span>
+<span id="cb18-19"><a href="#cb18-19" aria-hidden="true" tabindex="-1"></a>    <span class="st">`</span><span class="at">Median Income (Estimate)</span><span class="st">`</span> <span class="ot">=</span> median_incomeE,</span>
+<span id="cb18-20"><a href="#cb18-20" aria-hidden="true" tabindex="-1"></a>    <span class="st">`</span><span class="at">MOE %</span><span class="st">`</span> <span class="ot">=</span> income_moe_pct,</span>
+<span id="cb18-21"><a href="#cb18-21" aria-hidden="true" tabindex="-1"></a>    <span class="st">`</span><span class="at">Reliability</span><span class="st">`</span> <span class="ot">=</span> reliability,</span>
+<span id="cb18-22"><a href="#cb18-22" aria-hidden="true" tabindex="-1"></a>    <span class="at">Recommendation =</span> recommendation</span>
+<span id="cb18-23"><a href="#cb18-23" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb18-24"><a href="#cb18-24" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-25"><a href="#cb18-25" aria-hidden="true" tabindex="-1"></a><span class="fu">kable</span>(</span>
+<span id="cb18-26"><a href="#cb18-26" aria-hidden="true" tabindex="-1"></a>  <span class="fu">head</span>(recommendations, <span class="dv">10</span>),</span>
+<span id="cb18-27"><a href="#cb18-27" aria-hidden="true" tabindex="-1"></a>  <span class="at">caption =</span> <span class="st">"Decision Framework for Algorithm Implementation"</span></span>
+<span id="cb18-28"><a href="#cb18-28" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output-display">
+<table class="caption-top table table-sm table-striped small">
+<caption>Decision Framework for Algorithm Implementation</caption>
+<colgroup>
+<col style="width: 9%">
+<col style="width: 23%">
+<col style="width: 9%">
+<col style="width: 18%">
+<col style="width: 39%">
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: left;">County</th>
+<th style="text-align: right;">Median Income (Estimate)</th>
+<th style="text-align: right;">MOE %</th>
+<th style="text-align: left;">Reliability</th>
+<th style="text-align: left;">Recommendation</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">Adair</td>
+<td style="text-align: right;">51020</td>
+<td style="text-align: right;">8.682870</td>
+<td style="text-align: left;">Moderate Confidence</td>
+<td style="text-align: left;">Use with caution - monitor outcomes</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Andrew</td>
+<td style="text-align: right;">68774</td>
+<td style="text-align: right;">6.944485</td>
+<td style="text-align: left;">Moderate Confidence</td>
+<td style="text-align: left;">Use with caution - monitor outcomes</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Atchison</td>
+<td style="text-align: right;">58521</td>
+<td style="text-align: right;">6.298594</td>
+<td style="text-align: left;">Moderate Confidence</td>
+<td style="text-align: left;">Use with caution - monitor outcomes</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Audrain</td>
+<td style="text-align: right;">51745</td>
+<td style="text-align: right;">4.462267</td>
+<td style="text-align: left;">High Confidence</td>
+<td style="text-align: left;">Safe for algorithmic decisions</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Barry</td>
+<td style="text-align: right;">55592</td>
+<td style="text-align: right;">9.686646</td>
+<td style="text-align: left;">Moderate Confidence</td>
+<td style="text-align: left;">Use with caution - monitor outcomes</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Barton</td>
+<td style="text-align: right;">48105</td>
+<td style="text-align: right;">11.591311</td>
+<td style="text-align: left;">Low Confidence</td>
+<td style="text-align: left;">Requires manual review or additional data</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Bates</td>
+<td style="text-align: right;">54122</td>
+<td style="text-align: right;">9.574665</td>
+<td style="text-align: left;">Moderate Confidence</td>
+<td style="text-align: left;">Use with caution - monitor outcomes</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Benton</td>
+<td style="text-align: right;">50229</td>
+<td style="text-align: right;">7.722630</td>
+<td style="text-align: left;">Moderate Confidence</td>
+<td style="text-align: left;">Use with caution - monitor outcomes</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Bollinger</td>
+<td style="text-align: right;">52306</td>
+<td style="text-align: right;">16.525829</td>
+<td style="text-align: left;">Low Confidence</td>
+<td style="text-align: left;">Requires manual review or additional data</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Boone</td>
+<td style="text-align: right;">66564</td>
+<td style="text-align: right;">2.665104</td>
+<td style="text-align: left;">High Confidence</td>
+<td style="text-align: left;">Safe for algorithmic decisions</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb19"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Format as a professional table with kable()</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 <p><strong>Key Recommendations:</strong></p>
 <p><strong>Your Task:</strong> Use your analysis results to provide specific guidance to the department.</p>
