@@ -7,7 +7,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 <meta name="author" content="Luciano">
-<meta name="dcterms.date" content="2025-09-22">
+<meta name="dcterms.date" content="2025-09-29">
 
 <title>Assignment 1: Census Data Quality for Policy Decisions – Luciano Lu - MUSA 5080 Portfolio</title>
 <style>
@@ -156,10 +156,6 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
     <a class="dropdown-item" href="../../Labs/lab_0/lab0_template.html">
  <span class="dropdown-text">Lab 0</span></a>
   </li>  
-        <li>
-    <a class="dropdown-item" href="../../Labs/lab_1/assignment1_template.html">
- <span class="dropdown-text">Lab 1</span></a>
-  </li>  
     </ul>
   </li>
   <li class="nav-item dropdown ">
@@ -253,7 +249,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
     <div>
     <div class="quarto-title-meta-heading">Published</div>
     <div class="quarto-title-meta-contents">
-      <p class="date">September 22, 2025</p>
+      <p class="date">September 29, 2025</p>
     </div>
   </div>
   
@@ -1034,7 +1030,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </table>
 </div>
 </div>
-<p><strong>Pattern Analysis:</strong> [Describe any patterns you observe. Do certain types of communities have less reliable data? What might explain this?]</p>
+<p><strong>Pattern Analysis:</strong> Even after raising the threshold for high margins of error from 15% to 50%, nearly 94% of tracts remain flagged as high-MOE. Such an extreme distribution calls the reliability of the data into question: either the ACS sample sizes in these counties are insufficient, or the estimation procedures struggle to produce stable values in small communities. Some results are also counterintuitive. For instance, certain tracts with larger populations and higher shares of minority residents appear to have lower error rates—a pattern that challenges expectations. At this stage, it is difficult to draw substantive conclusions; what emerges most clearly is the presence of potential bias and instability within the data itself.</p>
 </section>
 </section>
 <section id="part-5-policy-recommendations" class="level1">
@@ -1044,7 +1040,8 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <p><strong>Your Task:</strong> Write an executive summary that integrates findings from all four analyses.</p>
 <p><strong>Executive Summary Requirements:</strong> 1. <strong>Overall Pattern Identification</strong>: What are the systematic patterns across all your analyses? 2. <strong>Equity Assessment</strong>: Which communities face the greatest risk of algorithmic bias based on your findings? 3. <strong>Root Cause Analysis</strong>: What underlying factors drive both data quality issues and bias risk? 4. <strong>Strategic Recommendations</strong>: What should the Department implement to address these systematic issues?</p>
 <p><strong>Executive Summary:</strong></p>
-<p>[Your integrated 4-paragraph summary here]</p>
+<p>The analysis shows that data reliability problems are not randomly distributed but concentrated in specific variables and geographies. At the county level, median household income estimates (B19013_001) exhibit much higher margins of error in small, rural counties: Shannon (21.2%), Carter (18.6%), Mississippi (18.5%), Ozark (18.1%), and Mercer (18.1%) all far exceed the 10% threshold, while larger metropolitan counties such as St.&nbsp;Louis report far lower error rates (1.64%). At the tract level, racial and ethnic variables (B03002) are especially unstable when minority group counts are small. Using a 50% MOE threshold, 94.4% of tracts were flagged as high-MOE, with Black and Hispanic estimates most often responsible for the flag. This pattern is stark in predominantly white, rural counties such as Buchanan (100% of tracts flagged) and Texas (75%), where Black and Hispanic groups make up less than 10% of the population. Even in St.&nbsp;Louis County, where the sample base is larger, 94.5% of tracts still exceeded the threshold, largely because Hispanic residents constitute only 3% of the county population.</p>
+<p>Because algorithms allocate resources based on point estimates without accounting for their uncertainty, unstable figures can translate directly into misclassification. In rural tracts with very small Black or Hispanic populations, ACS samples often produce highly volatile estimates. An algorithm that interprets these values at face value may conclude that such communities have little or no need for targeted services, even when real needs exist. Conversely, areas where small samples happen to inflate minority counts could be over-prioritized. The core risk is that statistical noise is treated as social reality, leaving already vulnerable groups more exposed to under-investment.</p>
 </section>
 <section id="specific-recommendations" class="level2">
 <h2 class="anchored" data-anchor-id="specific-recommendations">6.3 Specific Recommendations</h2>

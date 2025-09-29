@@ -404,8 +404,10 @@ kable(
 )
 ```
 
-**Pattern Analysis:** [Describe any patterns you observe. Do certain types of communities have less reliable data? What might explain this?]
-
+**Pattern Analysis:** 
+Even after raising the threshold for high margins of error from 15% to 50%, nearly 94% of tracts remain flagged as high-MOE. Such an extreme distribution calls the reliability of the data into question: either the ACS sample sizes in these counties are insufficient, or the estimation procedures struggle to produce stable values in small communities. 
+Some results are also counterintuitive. For instance, certain tracts with larger populations and higher shares of minority residents appear to have lower error rates—a pattern that challenges expectations. 
+At this stage, it is difficult to draw substantive conclusions; what emerges most clearly is the presence of potential bias and instability within the data itself.
 
 # Part 5: Policy Recommendations
 
@@ -421,7 +423,13 @@ kable(
 
 **Executive Summary:**
 
-[Your integrated 4-paragraph summary here]
+The analysis shows that data reliability problems are not randomly distributed but concentrated in specific variables and geographies. At the county level, median household income estimates (B19013_001) exhibit much higher margins of error in small, rural counties: Shannon (21.2%), Carter (18.6%), Mississippi (18.5%), Ozark (18.1%), and Mercer (18.1%) all far exceed the 10% threshold, while larger metropolitan counties such as St. Louis report far lower error rates (1.64%). At the tract level, racial and ethnic variables (B03002) are especially unstable when minority group counts are small. Using a 50% MOE threshold, 94.4% of tracts were flagged as high-MOE, with Black and Hispanic estimates most often responsible for the flag. This pattern is stark in predominantly white, rural counties such as Buchanan (100% of tracts flagged) and Texas (75%), where Black and Hispanic groups make up less than 10% of the population. Even in St. Louis County, where the sample base is larger, 94.5% of tracts still exceeded the threshold, largely because Hispanic residents constitute only 3% of the county population.
+
+Because algorithms allocate resources based on point estimates without accounting for their uncertainty, unstable figures can translate directly into misclassification. In rural tracts with very small Black or Hispanic populations, ACS samples often produce highly volatile estimates. An algorithm that interprets these values at face value may conclude that such communities have little or no need for targeted services, even when real needs exist. Conversely, areas where small samples happen to inflate minority counts could be over-prioritized. The core risk is that statistical noise is treated as social reality, where parts of the already vulnerable groups are more exposed to under-investment.
+
+The ACS is a very sample survey. 1. For a large city or county, hundreds of households might be surveyed, with estimate of median income and demographic counts. For a tiny county, only a handful of households are surveyed; 2. When a population has a dominant majority and a few minority members, the minority data will have high variance. Missouri’s rural counties often have very few minority residents, and thus data about those residents is scant and uncertain. If the algorithm tries to pinpoint, say, where to fund a minority outreach program, it might miss small communities entirely due to these data gaps. 3. Some communities (e.g., very low-income households, remote rural residents, certain ethnic minorities, immigrants) have historically lower response rates to the census and surveys. Language barriers, distrust in government, or simply being hard to reach (like no internet, P.O. box addresses, etc.) can lead to undercounting. That means the ACS might not just have statistical uncertainty, but actual systematic bias in who is represented.
+
+The algorithm should not treat all data points equally. Wherever possible, include the margin of error or a confidence weight in the algorithm’s calculations. For example, if ranking counties by median income (lowest income = highest need), adjust the ranking to account for MOE. A county with an income of $40k ± $8k should be considered as uncertain and perhaps be grouped with counties that have say $35k median ± $2k, rather than confidently placing it above or below them. Set rules that flag communities (counties or tracts) with low data confidence for manual review. If the data is too poor, don’t let the algorithm alone make the call. For instance, the algorithm could produce a preliminary list of priority areas but mark any area with “Low Confidence” data (like those >10% MOE counties, or tracts with >50% MOE on key stats) for human analysts to double-check. This ensures places like Shannon County or Texas County are not ignored just because of shaky data.
 
 ## 6.3 Specific Recommendations
 
