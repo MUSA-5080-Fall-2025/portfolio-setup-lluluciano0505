@@ -501,7 +501,7 @@ B01003: Total Population – for county populations.
 B03002: Hispanic or Latino Origin by Race – for tract-level total population and breakdown by White (non-Hispanic), Black (non-Hispanic), and Hispanic (any race) populations and their MOEs.
 
 **Reproducibility:** 
-The analysis was conducted using R (version 4.x) and the following main packages: tidycensus for data retrieval, tidyverse (dplyr, stringr) for data manipulation, and knitr/kable for presenting tables. A Census API key (personal to the analyst) was used to authenticate data requests; this key is required to replicate the data pulls. All code and documentation for this analysis are available in 
+The analysis was conducted using R (version 4.x) and the following main packages: tidycensus for data retrieval, tidyverse (dplyr, stringr) for data manipulation, and knitr/kable for presenting tables. A Census API key (personal to the analyst) was used to authenticate data requests; this key is required to replicate the data pulls. All code and documentation for this analysis are available in https://musa-5080-fall-2025.github.io/portfolio-setup-lluluciano0505/
 
 **Methodology Notes:**
 a. Reliability Thresholds: We defined “High”, “Moderate”, and “Low” confidence using specific MOE percentage cutoffs (5% and 10%). These thresholds are somewhat arbitrary but are common sense rules of thumb in survey analysis. A 5% MOE indicates a very tight estimate, while beyond 10% starts to indicate caution.
