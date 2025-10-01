@@ -22,5 +22,8 @@
   },
   "assignments/assignment_1/assignment1_template.knit.md": {
     "assignment1_template.knit.html": "738e5417"
+  },
+  "assignments/assignment_2/assignment2_template.qmd": {
+    "assignment2_template.html": "dff9388b"
   }
 }
