@@ -4925,6 +4925,16 @@ $enrollment_summary
 </figure>
 </div>
 </div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb22"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a>phl_access_elem <span class="sc">|&gt;</span></span>
+<span id="cb22-2"><a href="#cb22-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">st_drop_geometry</span>() <span class="sc">|&gt;</span></span>
+<span id="cb22-3"><a href="#cb22-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(priority) <span class="sc">|&gt;</span></span>
+<span id="cb22-4"><a href="#cb22-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(GEOID, coverage_pct, child_5_14) <span class="sc">|&gt;</span></span>
+<span id="cb22-5"><a href="#cb22-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">arrange</span>(<span class="fu">desc</span>(child_5_14))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>        GEOID coverage_pct child_5_14
+1 42101034802     4.242087       1077
+2 42101009300     8.411688        694</code></pre>
+</div>
 </div>
 <p><strong>Analysis requirements:</strong> - Clear code comments explaining each step - Appropriate CRS transformations - Summary statistics or counts - At least one map showing your findings - Brief interpretation of results (3-5 sentences)</p>
 <p><strong>Your interpretation:</strong></p>
@@ -4932,7 +4942,7 @@ $enrollment_summary
 <p>I run all operations in EPSG:2272 (NAD83 / Pennsylvania South ftUS). This StatePlane system minimizes distortion over Philadelphia and uses feet, which fits walk buffers and area calculations in miles/feet. The city publishes many layers in this CRS, so joins stay precise and distances do not inherit Web-Mercator scale errors.</p>
 <p>Why a 0.25-mile threshold for younger students?</p>
 <p>0.25 mile ≈ 1,320 ft ≈ a 5-minute walk at ~3 mph (3 mi/hr → 264 ft/min; 5 min → 1,320 ft). A five-minute target reflects comfort and supervision needs for younger children. Elementary pupils often walk more slowly, face more frequent stops, and require safer crossings. A 0.25-mile standard sets a conservative, child-appropriate access goal; 0.5 mile remains a reasonable secondary benchmark for older students and caregivers.</p>
-<p>The map shows high elementary walk access across the urban core. Coverage drops at the edges of the city and in a few industrial or low-density tracts. With a 0.5-mile buffer, only a small share of tracts qualify as “deserts,” and most do not have large child populations. A stricter 0.25-mile buffer reveals more low-coverage tracts and brings a few high-child-count areas into view. These priority tracts warrant near-term attention through safe-routes upgrades, school siting adjustments, or co-located youth services.</p>
+<p>The map shows high elementary walk access across the urban core. Coverage drops at the edges of the city and in a few industrial or low-density tracts. With a 0.5-mile buffer, only a small share of tracts qualify as “deserts,” and most do not have large child populations. A stricter 0.25-mile buffer reveals more low-coverage tracts and brings a few high-child-count areas (42101034802 and 42101009300) into view. These priority tracts warrant near-term attention through safe-routes upgrades, school siting adjustments, or co-located youth services.</p>
 </section>
 </section>
 <section id="finally---a-few-comments-about-your-incorporation-of-feedback" class="level2">

@@ -653,7 +653,6 @@ schools <- st_read(schools_path, quiet = TRUE) |>
     grade_org      = as.character(grade_org)
   )
 
-# 基础概览
 n_schools <- nrow(schools)
 crs_label <- st_crs(schools)$input
 bbox_ft   <- st_bbox(schools)
