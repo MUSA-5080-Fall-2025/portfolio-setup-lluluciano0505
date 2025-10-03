@@ -295,8 +295,8 @@ list(
 - How many tracts are underserved?
 - What percentage of vulnerable tracts are underserved?
 - Does this surprise you? Why or why not?
-
 7 tracts meet the definition. 2.8% of vulnerable tracts are undeserved.This result is not very surprising. Most of Pennsylvania’s population—and thus its healthcare infrastructure—is concentrated in urban and suburban counties. Rural areas may have some underserved tracts, but they are relatively few in number.
+
 ---
 
 #### Step 6: Aggregate to County Level
