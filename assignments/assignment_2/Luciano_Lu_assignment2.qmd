@@ -54,6 +54,7 @@ library(tigris)
 options(tigris_use_cache = TRUE, tigris_class = "sf")
 library(tidycensus)
 library(knitr)
+library(ggplot2)
 library(scales)
 
 # Load spatial data
@@ -208,8 +209,6 @@ list(
   vulnerable_tracts = n_vulnerable,
   pct_vulnerable = pct_vulnerable
 )
-
-
 
 ```
 
@@ -401,29 +400,6 @@ Create a choropleth map showing healthcare access challenges at the county level
 
 **Your Task:**
 ```{r}
-# Create county-level access map
-
-
-
-
-```
-
-**Requirements:**
-- Fill counties by percentage of vulnerable tracts that are underserved
-- Include hospital locations as points
-- Use an appropriate color scheme
-- Include clear title, subtitle, and caption
-- Use `theme_void()` or similar clean theme
-- Add a legend with formatted labels
-
----
-
-### Map 2: Detailed Vulnerability Map 
-
-Create a map highlighting underserved vulnerable tracts.
-
-**Your Task:**
-```{r}
 # Create detailed tract-level map
 library(dplyr)
 library(ggplot2)
@@ -456,7 +432,7 @@ ggplot() +
   ) +
   labs(
     title = "Healthcare Access Challenges in Pennsylvania",
-    subtitle = "Percent of vulnerable census tracts that are >15 miles from the nearest hospital",
+    subtitle = "Percent of vulnerable counties that are >15 miles from the nearest hospital",
     caption = "Sources: ACS 2022 5-year (tidycensus), lecture hospital data, county boundaries"
   ) +
   theme_void() +
@@ -469,7 +445,66 @@ ggplot() +
     plot.caption = element_text(size = 8, color = "grey30"),
     panel.background = element_rect(fill = "grey98", color = NA)
   )
+```
 
+**Requirements:**
+- Fill counties by percentage of vulnerable tracts that are underserved
+- Include hospital locations as points
+- Use an appropriate color scheme
+- Include clear title, subtitle, and caption
+- Use `theme_void()` or similar clean theme
+- Add a legend with formatted labels
+
+---
+
+### Map 2: Detailed Vulnerability Map 
+
+Create a map highlighting underserved vulnerable tracts.
+
+**Your Task:**
+```{r}
+tracts_final <- census_tracts_demo %>%
+  left_join(
+    tract_centroids %>%
+      st_drop_geometry() %>%
+      select(GEOID, nearest_hosp_dist_mi, vulnerable, underserved),
+    by = "GEOID"
+  )
+
+ggplot() +
+  geom_sf(
+    data = tracts_final,
+    aes(fill = factor(underserved, levels = c(0, 1), labels = c("Not Underserved", "Underserved"))),
+    color = "white", size = 0.1
+  ) +
+  geom_sf(
+    data = pa_counties_proj,
+    fill = NA, color = "black", size = 0.3
+  ) +
+  geom_sf(
+    data = hospitals_proj,
+    shape = 21, fill = "black", color = "white", size = 1.2, alpha = 0.7
+  ) +
+  scale_fill_manual(
+    name = "Vulnerability Status",
+    values = c("Not Underserved" = "#4C78A8", "Underserved" = "#D62728"),
+    na.value = "grey90"
+  ) +
+  labs(
+    title = "Underserved Vulnerable Census Tracts in Pennsylvania",
+    subtitle = "Vulnerable tracts are those with low income and high elderly populations",
+    caption = "Sources: ACS 2022 (tidycensus), lecture hospital data, county boundaries"
+  ) +
+  theme_void() +
+  theme(
+    legend.position = "right",
+    legend.title = element_text(size = 10, face = "bold"),
+    legend.text  = element_text(size = 9),
+    plot.title   = element_text(size = 14, face = "bold"),
+    plot.subtitle= element_text(size = 11),
+    plot.caption = element_text(size = 8, color = "grey30"),
+    panel.background = element_rect(fill = "grey98", color = NA)
+  )
 ```
 
 **Requirements:**
