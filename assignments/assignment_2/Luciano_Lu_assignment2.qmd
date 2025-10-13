@@ -899,7 +899,8 @@ Elementary pupils often walk more slowly, face more frequent stops, and require 
 The map shows high elementary walk access across the urban core. Coverage drops at the edges of the city and in a few industrial or low-density tracts. With a 0.5-mile buffer, only a small share of tracts qualify as “deserts,” and most do not have large child populations. A stricter 0.25-mile buffer reveals more low-coverage tracts and brings a few high-child-count areas (42101034802 and 42101009300) into view. These priority tracts warrant near-term attention through safe-routes upgrades, school siting adjustments, or co-located youth services.
 
 ## Finally - A few comments about your incorporation of feedback!
-Take a few moments to clean up your markdown document and then write a line or two or three about how you may have incorporated feedback that you recieved after your first assignment. 
+After the first assignment, I focused on making my analysis more structured and easier to read. I reorganized the Markdown file by grouping related visuals and adding short introductory sentences before each figure to explain its purpose.
+
 
 ---
 
