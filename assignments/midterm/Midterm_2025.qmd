@@ -1,0 +1,954 @@
+---
+title: "Midterm Challenge: Philadelphia Housing Price Prediction"
+subtitle: "MUSA 5080 - Public Policy Analytics"
+format: 
+  html:
+    toc: true
+    toc-location: left
+    code-fold: show
+    theme: cosmo
+---
+
+## Overview
+
+**Due Date:** October 27, 2025
+
+**In-Class Presentations:** October 27, 2025 (5 minutes per team)
+
+**Weight:** 15% of final grade
+
+**Team:** You'll work with your table-mates as a team. Feel free to delegate. Everyone should upload their final products onto their own portfolio websites. Be sure to acknowledge your team-mates.
+
+**Submission Format:**
+
+1. **Presentation Slides** (.qmd → revealjs, ~10-15 slides) - Main deliverable (see my weekly lecture notes for inspiration!)
+2. **Technical Appendix** (.qmd → HTML document) - Supporting details
+
+---
+
+## The Challenge
+
+You are consultancy (please name your consultancy) competing to win the bid to work for a project for the **Philadelphia Office of Property Assessment**. The city wants to improve its Automated Valuation Model (AVM) for property tax assessments. Your task is to build a predictive model for residential sale prices and **present your findings** to city officials in a 5-minute briefing. 
+
+**Deliverables:**
+
+1. **Presentation slides** (10-15 slides MAX) - Your main findings for stakeholders
+2. **Technical appendix** (HTML document) - All code, diagnostics, and detailed analysis
+3. **5-minute in-class presentation** - Deliver your slides on October 27th
+
+**Your goal:** Predict 2023-2024 home sale prices accurately while communicating findings clearly to a policy audience.
+
+---
+
+## Two-Part Submission
+
+### Part A: Presentation Slides (Primary Deliverable)
+
+**Format:** Quarto revealjs presentation
+
+**Example YAML:**
+```yaml
+---
+title: "Philadelphia Housing Price Prediction"
+subtitle: "Improving Property Tax Assessments"
+author: "Your Name"
+format: 
+  revealjs:
+    theme: simple
+    slide-number: true
+    smaller: true
+---
+```
+
+**Content:** ~10-15 (could be less!!) slides covering:
+1. Research question & motivation (1-2 slides)
+2. Data overview (1 slide)
+3. Key visualizations (2-3 slides)
+4. Model comparison results (1-2 slides)
+5. Main findings (2-3 slides)
+6. Policy recommendations (1-2 slides)
+
+**Audience:** City officials who don't know R or care about the nitty gritty of stats. They just want the best estimates possible. 
+
+**No code** in these slides - just polished visualizations and key takeaways
+
+---
+
+### Part B: Technical Appendix (Supporting Documentation)
+
+**Format:** Quarto HTML document
+
+**Example YAML:**
+```yaml
+---
+title: "Philadelphia Housing Model - Technical Appendix"
+author: "Your Name"
+format: 
+  html:
+    code-fold: show
+    toc: true
+    toc-location: left
+    theme: cosmo
+---
+```
+
+**Content:** All the technical details:
+- Complete data cleaning code
+- All EDA visualizations
+- Feature engineering code
+- Full model outputs
+- Diagnostic plots
+- Detailed interpretations
+
+**Audience:** Data scientists and technical reviewers
+
+**All code visible** - this is where you show your work
+
+---
+
+## Data Sources
+
+### Primary Dataset: Philadelphia Property Sales
+
+**Source:** [Philadelphia Property Sales](https://metadata.phila.gov/#home/datasetdetails/5543865f20583086178c4ee5/representationdetails/55d624fdad35c7e854cb21a4/)
+
+This dataset contains actual property sales with:
+
+- Sale price
+- Sale date
+- Property characteristics (bedrooms, bathrooms, sq ft, etc.)
+- Property location (address, coordinates)
+
+**You will need to:**
+
+- Download the data
+- Clean it (missing values, outliers, data errors)
+- Filter to 2023-2024 residential sales only
+
+
+### Secondary Datasets (You Choose!)
+
+**Required:** Browse the OpenPhily Data portal and use Census Data to incorporate spatial features into your model.
+
+**Your task:** Think like an urban planner. What location factors matter for housing prices in Philadelphia?
+
+---
+
+## Assignment Structure
+
+Your work should follow this workflow, with results split between presentation and appendix:
+
+### Phase 1: Data Preparation (Technical Appendix)
+
+**Load and clean Philadelphia sales data:**
+
+```{r}
+# Load necessary libraries
+library(tidyverse)
+library(sf)
+library(tidycensus)
+library(tigris)
+options(tigris_use_cache = TRUE, tigris_class = "sf")
+library(MASS)
+library(dplyr)
+library(scales)
+library(ggplot2)
+library(caret)
+```
+
+```{r}
+# Load primary sales data
+opa <- read_csv("~/Datasets for r Trainning/opa_properties_public.csv")
+opa_clean <- opa %>%
+  mutate(sale_date = as.Date(sale_date)) %>%
+  filter(between(sale_date, as.Date("2023-01-01"), as.Date("2024-12-31")))
+read_csv("~/Datasets for r Trainning/opa_properties_public.csv", show_col_types = FALSE)
+```
+```{r}
+# Select relevant variables
+opa_selected <- opa_clean %>%
+  dplyr::select(
+    sale_date, sale_price, market_value, building_code_description,
+    total_livable_area, number_of_bedrooms, number_of_bathrooms,
+    number_stories, garage_spaces, central_air, quality_grade,
+    interior_condition, exterior_condition, year_built,
+    zip_code, geographic_ward, census_tract, zoning, owner_1,
+    category_code_description, shape
+  ) %>%
+  filter(category_code_description == "SINGLE FAMILY") %>%
+  distinct() %>%
+  filter(
+    !is.na(sale_price) & sale_price > 1000 & sale_price < 1e8,
+    !is.na(total_livable_area) & total_livable_area > 0,
+    !is.na(year_built) & year_built > 1800 & year_built <= 2025
+  )
+```
+
+```{r}
+# Transform to sf object
+opa_sf <- st_as_sf(opa_selected, wkt = "shape", crs = 2272) %>%
+  st_transform(4326)
+
+# Create new variable: house age
+opa_sf <- opa_sf %>%
+  mutate(
+    house_age = 2025 - year_built
+  ) %>%
+  filter(house_age >= 0 & house_age <= 200)
+
+opa_sf$central_air <- ifelse(opa_sf$central_air %in% c("Y", "1"), 1,
+                           ifelse(opa_sf$central_air %in% c("N", "0"), 0, NA))
+```
+
+
+**Load secondary data:**
+
+```{r}
+# Load Census data for Philadelphia tracts
+philly_census <- get_acs(
+  geography = "tract",
+  variables = c(
+    total_pop = "B01003_001",
+    white_pop = "B02001_002",
+    asian_pop = "B02001_005",
+    
+    ba_degree = "B15003_022",
+    total_edu = "B15003_001",
+    
+    median_income = "B19013_001",
+    poverty_pop = "B17001_002",
+    
+    labor_force = "B23025_003",
+    unemployed = "B23025_005"
+  ),
+  year = 2023,
+  state = "PA",
+  county = "Philadelphia",
+  geometry = TRUE
+) %>%
+  dplyr::select(GEOID, variable, estimate, geometry) %>%   # ← 用 dplyr::
+  tidyr::pivot_wider(names_from = variable, values_from = estimate) %>%
+  dplyr::mutate(
+    white_share = 100 * white_pop / total_pop,
+    asian_share = 100 * asian_pop / total_pop,
+    ba_rate = 100 * ba_degree / total_edu,
+    unemployment_rate = 100 * unemployed / labor_force,
+    poverty_rate = 100 * poverty_pop / total_pop
+  ) %>%
+  st_transform(st_crs(opa_sf))
+```
+```{r}
+# Spatial join of OPA data with Census data
+opa_census <- st_join(opa_sf, philly_census, join = st_within) %>%
+  filter(!is.na(median_income))
+```
+
+**Deliverable (Appendix only):**
+
+This section documents the data cleaning and preparation process for the Philadelphia housing dataset used in our modeling analysis.
+
+Deliverables include:
+
+✅ Complete data cleaning code: full R pipeline from raw OPA property sales to a cleaned, spatially joined dataset ready for modeling.
+
+✅ Summary tables showing before/after dimensions: record counts before and after filtering, demonstrating how outliers, missing values, and non-residential properties were removed.
+
+✅ Narrative explaining decisions: rationale for each filtering and transformation step, including choices about time range (2023–2024), residential property type selection, treatment of missing or implausible values, and creation of derived variables such as house_age.
+
+Together, these components ensure transparency and reproducibility of the data preprocessing workflow prior to modeling.
+
+---
+
+### Phase 2: Exploratory Data Analysis
+
+**Create at least 5 professional visualizations:**
+
+1. Distribution of sale prices (histogram)
+```{r}
+ggplot(opa_census, aes(x = sale_price)) +
+  geom_histogram(bins = 40, fill = "steelblue", color = "white") +
+  geom_vline(aes(xintercept = median(log(sale_price))), linetype = "dashed") +
+  labs(title = "Distribution of Log Sale Prices (2023–2024)",
+       x = "Sale Price", y = "Count")
+```
+
+2. Geographic distribution (map)
+```{r}
+ggplot() +
+  geom_sf(data = philly_census, fill = "lightgrey", color = "white") +
+  geom_sf(data = opa_census, aes(color = sale_price), size = 0.1, alpha = 0.7) +
+  scale_color_viridis_c(option = "plasma") +
+  theme_minimal() +
+  labs(title = "Housing Sales in Philadelphia (2023-2024)", color = "Sale Price")
+```
+
+3. Price vs. structural features (scatter plots)
+```{r}
+ggplot(opa_census, aes(x = total_livable_area, y = sale_price)) +
+  geom_point(alpha = 0.3) +
+  geom_smooth(method = "lm", color = "red") +
+  scale_x_log10() +
+  labs(title = "Sale Price vs. Livable Area",
+       x = "Total Livable Area ", y = "Sale Price")
+```
+
+4. Price vs. spatial features (scatter plots)
+```{r}
+ggplot(opa_census, aes(x = unemployment_rate, y = sale_price)) +
+  geom_jitter(alpha = 0.3, color = "#4682B4") +
+  geom_smooth(method = "lm", se = FALSE, color = "darkred", linewidth = 0.8) +
+  scale_y_log10(labels = scales::dollar) +
+  labs(
+    title = "Sale Price vs unemployment rate",
+    x = "unemployment rate (%)",
+    y = "Sale Price"
+  )
+```
+
+5. One creative visualization
+```{r}
+ward_boundaries <- st_read("~/Datasets for r Trainning/Political_Wards.geojson") %>%
+  st_transform(2272) %>%
+  mutate(
+    geographic_ward = as.character(ward_num)
+  )
+
+ward_price <- opa_census %>%
+  st_drop_geometry() %>%
+  mutate(geographic_ward = as.character(geographic_ward)) %>%
+  group_by(geographic_ward) %>%
+  summarise(median_price = median(sale_price, na.rm = TRUE))
+
+ward_sf <- ward_boundaries %>%
+  left_join(ward_price, by = "geographic_ward")
+
+ggplot(ward_sf) +
+  geom_sf(aes(fill = median_price), color = "white", size = 0.2) +
+  scale_fill_viridis_c(option = "plasma", labels = scales::dollar) +
+  labs(
+    title = "Median Residential Sale Price by Ward (2023–2024)",
+    subtitle = "Philadelphia, PA",
+    caption = "Data: OPA Property Sales 2023–2024"
+  ) +
+  coord_sf(datum = NA) +
+  theme_minimal(base_size = 14) +
+  theme(
+    axis.text = element_blank(),
+    axis.ticks = element_blank(),
+    panel.grid = element_blank()
+  )
+```
+
+
+**For presentation slides:** Select your **best 2-3 visualizations** that tell a compelling story
+
+**For appendix:** Include all visualizations with detailed interpretations
+
+**Example presentation slide:**
+
+```markdown
+## Where Are Expensive Homes in Philadelphia?
+
+[Beautiful map showing price patterns]
+
+**Key Findings:**
+- Center City and University City command premium prices
+- River wards show emerging appreciation
+- Northeast Philadelphia remains most affordable
+```
+
+---
+
+### Phase 3: Feature Engineering (Technical Appendix)
+
+**Create spatial features: (these are examples below, but how you construct your model is up to your team)**
+
+1. **Buffer-based features**:
+
+```{r}
+# Load transit stop data and create buffer-based feature
+Transit <- read_csv("~/Datasets for r Trainning/Transit.csv")
+transit_sf <- st_as_sf(Transit, coords = c("Lon", "Lat"), crs = 4326) %>%
+  st_transform(st_crs(opa_census))
+radius <- 400
+opa_census$transit_count <- lengths(st_is_within_distance(opa_census, transit_sf, dist = radius))
+read_csv("~/Datasets for r Trainning/Transit.csv", show_col_types = FALSE)
+```
+
+```{r}
+recreation <- read_csv("~/Datasets for r Trainning/recreation.csv") 
+recreation_sf <- st_as_sf(recreation, coords = c("X", "Y"), crs = 4326) %>% st_transform(st_crs(opa_census)) 
+radius_rec <- 1200 
+opa_census$recreation_count <- lengths(st_is_within_distance(opa_census, recreation_sf, dist = radius_rec)) 
+read_csv("~/Datasets for r Trainning/recreation.csv", show_col_types = FALSE)
+```
+```{r}
+# Load crime data and create buffer-based feature 
+crime <- read_csv("~/Datasets for r Trainning/crime.csv") %>% 
+  filter(!is.na(lat) & !is.na(lng)) 
+crime_sf <- st_as_sf(crime, coords = c("lng", "lat"), crs = 4326) %>%
+  st_transform(st_crs(opa_census)) 
+radius_cri <- 400 
+opa_census$crime_count <- lengths(st_is_within_distance(opa_census, crime_sf, dist = radius_cri)) 
+read_csv("~/Datasets for r Trainning/crime.csv", show_col_types = FALSE)
+```
+
+2. **k-Nearest Neighbor features**:
+
+```{r}
+hospital_sf <- st_read("~/Datasets for r Trainning/hospitals.geojson", quiet = TRUE) %>%
+  st_transform(st_crs(opa_census))
+opa_census <- st_transform(opa_census, st_crs(hospital_sf))
+nearest_hospital_index <- st_nearest_feature(opa_census, hospital_sf)
+opa_census$nearest_hospital_m <- st_distance(
+  opa_census,
+  hospital_sf[nearest_hospital_index, ],
+  by_element = TRUE
+)
+opa_census$nearest_hospital_m <- as.numeric(opa_census$nearest_hospital_m)
+```
+
+
+3. **Census variables**:
+
+   See secondary data above for examples (median income, education rate, unemployment rate, etc.)
+
+4. **Interaction terms**:
+
+   - Theoretically motivated combinations
+   - Example: `total_livable_area * house_age`
+
+**Deliverable (Appendix only):**
+
+- All feature engineering code
+- Summary table of features created
+- Brief justification for each feature
+```{r}
+summary_table <- opa_census %>%
+  st_drop_geometry() %>%
+  summarise(across(
+    where(is.numeric),
+    list(mean = ~mean(., na.rm = TRUE),
+         sd   = ~sd(., na.rm = TRUE),
+         min  = ~min(., na.rm = TRUE),
+         max  = ~max(., na.rm = TRUE))
+  )) %>%
+  pivot_longer(
+    cols = everything(),
+    names_to = c("variable", "stat"),
+    names_pattern = "^(.*)_(mean|sd|min|max)$"
+  ) %>%
+  pivot_wider(
+    names_from = stat,
+    values_from = value
+  )
+
+print(summary_table)
+```
+
+---
+
+### Phase 4: Model Building
+
+**Build models progressively: (for example)**
+
+1. Structural features only
+```{r}
+model1 <- lm(sale_price ~ total_livable_area + number_of_bedrooms +
+               number_of_bathrooms + house_age,
+             data = opa_census)
+summary(model1)
+```
+
+2. + Census variables
+```{r}
+model2 <- lm(sale_price ~ total_livable_area + number_of_bedrooms +
+               number_of_bathrooms + house_age +
+               median_income + ba_rate + unemployment_rate,
+             data = opa_census)
+summary(model2)
+```
+
+3. + Spatial features
+```{r}
+model3 <- lm(sale_price ~ total_livable_area + number_of_bedrooms +
+               number_of_bathrooms + house_age +
+               median_income + ba_rate + crime_count +
+               transit_count + recreation_count + nearest_hospital_m,
+             data = opa_census)
+summary(model3)
+```
+
+4. + Interactions and fixed effects
+```{r}
+ward_boundaries <- st_transform(ward_boundaries, st_crs(opa_census))
+opa_census <- st_join(opa_census, ward_boundaries %>% dplyr::select(geographic_ward), left = TRUE)
+
+model4 <- lm(sale_price ~ total_livable_area * house_age +
+               number_of_bathrooms + house_age +
+               median_income + ba_rate + crime_count +
+               transit_count + nearest_hospital_m + factor(geographic_ward.y),
+             data = opa_census)
+summary(model4)
+```
+
+
+**For presentation slides:** Show **one comparison table** (RMSE, R² for 4 different models you constructed in your process)
+
+**For appendix:**
+
+- Complete model code
+- Full stargazer/modelsummary output
+- Coefficient interpretations
+
+**Example presentation slide:**
+
+```markdown
+## Model Performance Improves with Each Layer
+
+| Model | CV RMSE (log) | R² |
+|-------|---------------|-----|
+| Structural Only | 0.42 | 0.61 |
+| + Census | 0.38 | 0.69 |
+| + Spatial | 0.31 | 0.78 |
+| + Interactions/FE | 0.26 | 0.84 |
+
+**Bottom line:** Neighborhood effects matter most!
+```
+
+---
+
+### Phase 5: Model Validation
+
+**Use 10-fold cross-validation:**
+- Compare all 4 models
+- Report RMSE, MAE, R² for each
+- Create predicted vs. actual plot
+```{r}
+model_data <- opa_census %>%
+  st_drop_geometry() %>%
+  dplyr::select(
+    sale_price, total_livable_area, number_of_bedrooms,
+    number_of_bathrooms, house_age,
+    median_income, ba_rate, unemployment_rate,
+    crime_count, transit_count, recreation_count,
+    nearest_hospital_m, geographic_ward.y
+  ) %>%
+  filter(complete.cases(.))
+```
+
+```{r}
+set.seed(42)
+
+cv_control <- trainControl(
+  method = "cv",
+  number = 10,
+  savePredictions = "final"
+)
+```
+
+```{r}
+fml1 <- sale_price ~ total_livable_area + number_of_bedrooms + number_of_bathrooms + house_age
+fml2 <- update(fml1, . ~ . + median_income + ba_rate + unemployment_rate)
+fml3 <- update(fml2, . ~ . + crime_count + transit_count + recreation_count + nearest_hospital_m)
+fml4 <- update(fml3, . ~ . + total_livable_area:house_age + factor(geographic_ward.y))
+
+m1 <- train(fml1, data = model_data, method = "lm", trControl = cv_control)
+m2 <- train(fml2, data = model_data, method = "lm", trControl = cv_control)
+m3 <- train(fml3, data = model_data, method = "lm", trControl = cv_control)
+m4 <- train(fml4, data = model_data, method = "lm", trControl = cv_control)
+```
+
+```{r}
+results <- resamples(list(
+  Model1 = m1, Model2 = m2, Model3 = m3, Model4 = m4
+))
+
+summary(results)
+```
+```{r}
+predicted_df <- m4$pred
+ggplot(predicted_df, aes(x = pred, y = obs)) +
+  geom_point(alpha = 0.3, color = "#4682B4") +
+  geom_abline(slope = 1, intercept = 0, linetype = "dashed", color = "red") +
+  labs(title = "Predicted vs. Actual Sale Prices (Model 4)",
+       x = "Predicted Price", y = "Actual Price") +
+  theme_minimal()
+
+```
+
+**For presentation slides:** Final CV results table (shown above) + one compelling visual
+
+**For appendix:** 
+
+- Complete CV code
+- Detailed results
+- Predicted vs. actual scatter plot
+- Discussion of which features matter most
+```{r}
+library(tibble)
+library(gt)
+
+model_results <- tibble(
+  Model = c("Model 1", "Model 2", "Model 3", "Model 4"),
+  MAE = c(139645, 125333, 130631, 126322),
+  RMSE = c(348642, 344890, 341023, 326913),
+  R2 = c(0.304, 0.325, 0.341, 0.394)
+)
+
+model_results %>%
+  gt() %>%
+  fmt_number(columns = c(MAE, RMSE), decimals = 0) %>%
+  fmt_number(columns = R2, decimals = 3)
+```
+
+
+---
+
+### Phase 6: Model Diagnostics (Technical Appendix Only)
+
+**Check assumptions for best model:**
+
+- Residual plot (linearity, homoscedasticity)
+- Q-Q plot (normality)
+- Cook's distance (influential observations)
+```{r}
+par(mfrow = c(1, 3))
+
+# 1. Residuals vs Fitted
+plot(model4, which = 1, main = "Residuals vs Fitted")
+
+# 2. Normal Q-Q
+plot(model4, which = 2, main = "Q-Q Plot")
+
+# 3. Cook’s distance
+plot(model4, which = 4, main = "Cook’s Distance")
+
+```
+
+```{r}
+opa_census$predicted <- predict(model4, newdata = opa_census)
+opa_census$residual <- opa_census$sale_price - opa_census$predicted
+
+opa_census %>%
+  filter(!is.na(residual)) %>%
+  ggplot() +
+  geom_sf(aes(fill = residual), color = NA) +
+  scale_fill_gradient2(low = "blue", mid = "white", high = "red") +
+  labs(
+    title = "Prediction Residuals (Model 4)",
+    fill = "Residual ($)"
+  ) +
+  theme_minimal()
+
+```
+
+**Deliverable (Appendix only):**
+
+- All 3 diagnostic plots
+- Interpretation of each
+- How you addressed violations (if any)
+
+**Note:** Don't include diagnostic plots in presentation - too technical!
+
+---
+
+### Phase 7: Conclusions & Recommendations
+
+**Answer these questions:**
+
+1. What is your final model's accuracy?
+2. Which features matter most for Philadelphia prices?
+3. Which neighborhoods are hardest to predict?
+4. Equity concerns?
+5. Limitations?
+
+**For presentation slides:** 1-2 slides with clear, concise answers (bullet points)
+
+**For appendix:** 2-3 paragraphs with detailed discussion
+
+**Example presentation slide:**
+
+```markdown
+## Key Findings & Recommendations
+
+**Model Accuracy:** RMSE = 0.26 (log scale) ≈ 26% typical error
+
+**Top Predictors:**
+- Neighborhood fixed effects (largest impact)
+- Square footage (β = 0.0003, p < 0.001)
+- Distance to transit (β = -0.05, p < 0.001)
+
+**Recommendations:**
+✓ Current AVM undervalues transit-accessible properties  
+✓ Model struggles in rapidly gentrifying neighborhoods  
+```
+
+---
+
+## Submission Requirements
+
+### What to Submit (by 9:59 AM, October 27, 2025)
+
+**Upload to Canvas - A link to your portfolio that Contains**
+
+1. **Presentation Slides**
+
+   - `LastName_FirstName_Presentation.html` (rendered slides)
+   - `LastName_FirstName_Presentation.qmd` (source file)
+   - Must use `format: revealjs`
+   - 10-15 slides maximum
+   - No code visible in slides
+
+2. **Technical Appendix**
+
+   - `LastName_FirstName_Appendix.html` (rendered document)
+   - `LastName_FirstName_Appendix.qmd` (source file)
+   - Must use `format: html`
+   - All code visible and commented
+   - Complete analysis documented
+
+3. **Data files** OR clear download instructions in appendix
+
+**For Teams:** Use `LastName1_LastName2_Presentation.html`
+
+### In-Class Presentation (October 27, 2025)
+
+**Format:** 5 minutes per team
+
+**What to present:**
+
+- Walk through your presentation slides. Choose your team's spoke's person or take turns You'll all stand up there and try to look calm, confident, & collected.
+- Hit the highlights - research question, key viz, model results, recommendations
+- Speak to a policy audience (your classmates are pretending to be city officials)
+- Be ready for 1-2 questions
+- You are trying to win the bid! Convince the audience of your agency's work.
+
+**What NOT to do:**
+
+- Don't read slides verbatim
+- Don't show code
+- Don't go into technical details
+- Don't go over 5 minutes (I'll cut you off!)
+
+---
+
+## Grading Rubric (Scaled to 15% of course grade)
+
+### Presentation Slides 
+
+| Component | Points | Criteria |
+|-----------|--------|----------|
+| **Research Question** | 2 | Clear motivation, Set the stage |
+| **Data Overview** | 2 | Concise description of sources, sample size |
+| **Visualizations** | 3 | 2-3 polished, publication-quality visualizations; clear takeaways |
+| **Model Comparison** | 3 | Clean results table; clear winner; interprets improvement |
+| **Key Findings** | 3 | Top predictors identified; coefficients interpreted correctly |
+| **Presentation Quality** | 3 | Professional design, no typos, flows logically, appropriate for audience |
+
+**Key:** Slides should tell a compelling story without technical jargon. Imagine presenting to the Deputy Mayor.
+
+---
+
+### In-Class Presentation
+
+| Component | Points | Criteria |
+|-----------|--------|----------|
+| **Content** | 2 | Covers key points efficiently, answers questions thoughtfully |
+| **Time Management** | 2 | Finishes within 5 minutes without rushing |
+
+---
+
+### Technical Appendix 
+
+| Component | Points | Criteria |
+|-----------|--------|----------|
+| **Data Cleaning** | 3 | Complete code, proper filtering, missing value handling, documentation |
+| **EDA** | 3 | 5+ visualizations, each with interpretation |
+| **Feature Engineering** | 3 | Buffers , kNN , census , interactions , all properly created |
+| **Model Building** | 3 | 4 progressive models, proper specification, handles sparse categories |
+| **Cross-Validation** | 3 | Proper 10-fold CV, results table, code runs without errors |
+| **Diagnostics** | 3 | Residual plots included, interpreted, violations addressed |
+| **Code Quality** | 3 | Clean, commented, reproducible, follows best practices, no errors |
+
+**Key:** This is where technical reviewers verify your work. All code must run without errors & be reproducible!!.
+
+---
+
+
+## Example Presentation Structure
+
+**Slide 1: Title**
+- Your team name and teammates
+- Project title
+- Date
+
+**Slide 2: The Problem**
+
+
+**Slide 3: Data Sources**
+- Property sales (n = X,XXX, 2023-2024)
+- Census ACS (income, education, poverty)
+- OpenDataPhilly (parks, transit, crime)
+
+**Slide 4: Where Are Expensive Homes?**
+- [Map visualization]
+- Key pattern observed
+
+**Slide 5: What Drives Prices?**
+- [Best scatter plot or faceted visualization]
+- Key relationship identified
+
+**Slide 6: Model Comparison**
+- [Results table]
+- "Each layer improves prediction"
+
+**Slide 7: Top Predictors**
+- Neighborhood (biggest impact)
+- Square footage (β = X)
+- Transit access (β = Y)
+
+**Slide 8: Model Performance**
+- Final RMSE: 0.26 (log scale)
+- Translation: ~26% typical error
+- Beats baseline by 40%
+
+**Slide 9: Hardest to Predict**
+- [Visualization of residuals by neighborhood]
+
+
+**Slide 10: Recommendations**
+
+
+**Slide 11: Limitations & Next Steps**
+
+
+**Slide 12: Questions?**
+- Thank you
+- [Contact info]
+
+---
+
+## Tips for Success
+
+### Start Early
+- Data cleaning always takes longer than expected
+- OpenDataPhilly can be slow to download
+- Leave time for troubleshooting AND RENDERING!!!
+
+### Check Your Work
+
+- Organize your file directory from the beginning. 
+- Run your entire .qmd file from scratch before submitting 
+- Make sure all visualizations display
+- Check that your narrative flows logically
+
+
+
+---
+
+## Frequently Asked Questions
+
+**Q: Do I have to create both slides AND an appendix?**  
+
+A: Yes! Slides are your main deliverable (present findings). Appendix proves you did the work correctly.
+
+**Q: Can code appear in my presentation slides?** 
+
+A: NO! Slides are for city officials. All code goes in the technical appendix.
+
+**Q: How many slides should I have?**  
+
+A: 10-15 maximum. Quality over quantity. Each slide should have a clear purpose.
+
+**Q: Can I use a different city?**  
+A: No, everyone uses Philadelphia for comparability.
+
+**Q: How do I make my .qmd render as revealjs slides?**  
+A: Use `format: revealjs` in your YAML (see template above). Test it early!
+
+**Q: My presentation is 8 minutes. Is that okay?**  
+A: NO! You must cut it to 5 minutes. Practice and trim ruthlessly.
+
+**Q: Should I include all 5 EDA visualizations in my slides?**  
+A: No! Slides should have your best 2-3 visualizations. Put all 5 in the appendix.
+
+**Q: My RMSE is 0.35 in log scale. Is that good?**  
+A: Depends on your data, but 0.25-0.45 is typical for hedonic models. Compare to your baseline or put your data back into dollars!
+
+**Q: Should I remove all outliers?**  
+A: No! Only remove obvious errors. Use log transformation to handle legitimate outliers.
+
+**Q: What if my code works on my computer but not when I knit?**  
+A: Start fresh, restart R, knit in a clean session. Check for hard-coded paths.
+
+**Q: Can I use ChatGPT/Claude to write my analysis?**  
+A: You may use AI for debugging code, but NOT for writing your analysis. 
+
+**Q: How formal should my presentation be?**  
+A: Professional but not stuffy. Like you're briefing a city council member who's smart but doesn't know statistics.
+
+**Q: What happens if I go over 5 minutes?**  
+A: I'll politely cut you off and you'll lose points. Practice with a timer!
+
+---
+
+## Example Workflow
+
+**Week 1:**
+- Download data
+- Initial cleaning
+- Basic EDA
+
+**Week 2:**
+- Feature engineering
+- Build 4 models
+- Run cross-validation
+- Diagnostics
+- Write conclusions
+- Proofread and submit
+
+---
+
+## Academic Integrity
+
+- You may discuss concepts with classmates
+- You may NOT share code or slides
+- All work must be your own (or your teams)
+- Cite any external resources used
+- Please acknowledge how you used AI in your work and which AI you used (For example, Claude helped me today in coming up with a draft of this assignment, but I edited it thoroughly!)
+
+---
+
+## Final Checklist Before Submitting
+
+### Presentation Slides
+- [ ] Renders correctly as revealjs slides
+- [ ] 10-15 slides maximum
+- [ ] No code visible anywhere
+- [ ] 2-3 polished visualizations
+- [ ] Clear model comparison table
+- [ ] No typos or formatting errors
+- [ ] Professional theme applied
+- [ ] Tested presentation timing (<5 minutes)
+
+### Technical Appendix
+- [ ] Renders correctly as HTML document
+- [ ] All code visible and commented
+- [ ] Data cleaning fully documented
+- [ ] 5+ EDA visualizations included
+- [ ] All features properly created
+- [ ] 4 models with full output
+- [ ] 10-fold CV code runs without errors
+- [ ] Diagnostic plots included
+- [ ] Sparse categories handled correctly
+- [ ] Tested that it knits without errors
+
+### Both Files
+- [ ] Proper file naming convention
+- [ ] Both .qmd source files included
+- [ ] Data sources clearly documented
+- [ ] No hard-coded file paths (use relative paths! - this should be reproducible)
+- [ ] Uploaded to Canvas on time
+
+---
