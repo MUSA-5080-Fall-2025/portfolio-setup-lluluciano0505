@@ -37,5 +37,11 @@
   },
   "assignments/midterm/Presentation_slides.qmd": {
     "Presentation_slides.html": "ea83ae6d"
+  },
+  "assignments/assignment_4/data/hw4.qmd": {
+    "hw4.html": "73e6b069"
+  },
+  "assignments/assignment_4/Assignment4_Instructions.md": {
+    "Assignment4_Instructions.html": "4ae78bb5"
   }
 }

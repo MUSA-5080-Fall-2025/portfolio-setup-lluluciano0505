@@ -1,0 +1,607 @@
+---
+title: "Spatial Predictive Modeling – Sanitation 311 Requests"
+subtitle: "MUSA 5080 – Fall 2025"
+author: "Jingqi Lu"
+date: today
+format:
+  html:
+    code-fold: show
+    code-tools: true
+    toc: true
+    toc-depth: 3
+    toc-location: left
+    theme: cosmo
+    embed-resources: true
+editor: visual
+execute:
+  warning: false
+  message: false
+---
+
+```{r setup}
+#| message: false
+#| warning: false
+
+# Step 0. Setup ----
+library(tidyverse)
+library(sf)
+library(here)
+library(spatstat.geom)
+library(spatstat.explore)
+library(terra)
+library(FNN)
+library(spdep)
+library(MASS)
+library(lubridate)
+library(knitr)
+library(kableExtra)
+
+set.seed(5080)
+options(scipen = 999)
+```
+
+## Step 1: Choose sanitation complaints as predict data
+
+### Getting the Data
+
+```{r}
+# Save locally under /data/Sanitation.csv
+sanitation_raw <- read_csv("Sanitation.csv")
+
+# 1.2 Quick check of structure and basic fields
+glimpse(sanitation_raw)
+
+# 1.3 Clean and convert to spatial points (keep necessary columns)
+# Adjust variable names based on actual CSV field names
+sanitation_sf <- sanitation_raw %>%
+  mutate(CreationDate = mdy(`Creation Date`),
+         Year = year(CreationDate)) %>%
+  filter(Year == 2017,
+         !is.na(Latitude), !is.na(Longitude)) %>%
+  st_as_sf(coords = c("Longitude", "Latitude"), crs = 4326) %>%
+  st_transform('ESRI:102271')
+```
+
+## Step 2: Complete the Analysis
+
+#### Part 1: Data Loading & Exploration
+
+```{r}
+# Load Chicago boundary for context
+chicagoBoundary <- st_read("https://raw.githubusercontent.com/urbanSpatial/Public-Policy-Analytics-Landing/master/DATA/Chapter5/chicagoBoundary.geojson") %>%
+  st_transform('ESRI:102271')
+
+# Quick spatial plot: where are the violations located?
+ggplot() +
+  geom_sf(data = chicagoBoundary, fill = "gray95", color = "gray60") +
+  geom_sf(data = sanitation_sf, color = "#d62828", size = 0.1, alpha = 0.4) +
+  labs(
+    title = "Spatial Distribution of Sanitation Code Violations in Chicago",
+    subtitle = paste0("2017, n = ", nrow(sanitation_sf)),
+    caption = "Source: Chicago 311 Service Requests (Open Data Portal)"
+  ) +
+  theme_minimal() +
+  theme(
+    plot.title = element_text(face = "bold", size = 14),
+    plot.subtitle = element_text(color = "gray40"),
+    axis.text = element_blank(),
+    axis.title = element_blank(),
+    panel.grid = element_blank()
+  )
+
+# Verify result
+cat("✓ 311 sanitation records for 2017:", nrow(sanitation_sf), "\n")
+```
+
+Violations cluster densely along the city’s central and southern corridors, especially on the South and West Sides. The North Side shows lighter, more scattered activity. Overall, incidents follow residential density and older housing patterns, revealing clear spatial concentration rather than uniform distribution.
+
+#### Part 2: Fishnet Grid Creation
+
+-   Create a 500m x 500m fishnet grid
+-   Aggregate your violations to grid cells
+-   Visualize the count distribution
+
+```{r}
+fishnet <- st_make_grid(
+  chicagoBoundary,
+  cellsize = 500,   # 500 meters per cell
+  square = TRUE
+) %>%
+  st_sf() %>%
+  mutate(uniqueID = row_number()) %>%
+  filter(lengths(st_intersects(., chicagoBoundary)) > 0)
+
+cat("✓ Created fishnet grid with", nrow(fishnet), "cells\n")
+```
+
+```{r}
+sanitation_count <- st_join(sanitation_sf, fishnet, join = st_within) %>%
+  st_drop_geometry() %>%
+  group_by(uniqueID) %>%
+  summarise(countSanitation = n())
+
+fishnet <- fishnet %>%
+  left_join(sanitation_count, by = "uniqueID") %>%
+  mutate(countSanitation = replace_na(countSanitation, 0))
+
+summary(fishnet$countSanitation)
+```
+
+```{r}
+ggplot() +
+  geom_sf(data = fishnet, aes(fill = countSanitation), color = NA) +
+  geom_sf(data = chicagoBoundary, fill = NA, color = "white", linewidth = 0.7) +
+  scale_fill_viridis_c(
+    name = "Violations",
+    option = "plasma",
+    trans = "sqrt",
+    breaks = c(0, 1, 5, 10, 20, 40)
+  ) +
+  labs(
+    title = "Sanitation Code Violations by 500m Grid Cell",
+    subtitle = "Chicago, 2017",
+    caption = "Source: Chicago 311 Service Requests (Open Data Portal)"
+  ) +
+  theme_minimal() +
+  theme(
+    plot.title = element_text(face = "bold", size = 14),
+    plot.subtitle = element_text(color = "gray40"),
+    axis.text = element_blank(),
+    axis.title = element_blank(),
+    panel.grid = element_blank()
+  )
+```
+
+#### Part 3: Spatial Features
+
+```{r}
+fishnet_centroids <- st_centroid(fishnet)
+san_coords <- st_coordinates(sanitation_sf)
+fish_coords <- st_coordinates(fishnet_centroids)
+
+nn_result <- get.knnx(san_coords, fish_coords, k = 3)
+fishnet$nn_meanDist <- rowMeans(nn_result$nn.dist)
+
+summary(fishnet$nn_meanDist)
+cat("✓ Added 3-NN mean distance feature\n")
+```
+
+```{r}
+coords <- st_coordinates(fishnet_centroids)
+nb <- knn2nb(knearneigh(coords, k = 5))
+lw <- nb2listw(nb, style = "W", zero.policy = TRUE)
+
+localM <- localmoran(fishnet$countSanitation, lw)
+mean_val <- mean(fishnet$countSanitation, na.rm = TRUE)
+
+fishnet <- fishnet %>%
+  mutate(
+    localI = localM[, 1],
+    p_value = localM[, 5],
+    significant = p_value < 0.05,
+    clusterType = case_when(
+      !significant ~ "Not Significant",
+      localI > 0 & countSanitation > mean_val ~ "High-High",
+      localI > 0 & countSanitation <= mean_val ~ "Low-Low",
+      localI < 0 & countSanitation > mean_val ~ "High-Low",
+      localI < 0 & countSanitation <= mean_val ~ "Low-High",
+      TRUE ~ "Not Significant"
+    )
+  )
+```
+
+```{r}
+ggplot() +
+  geom_sf(data = fishnet, aes(fill = clusterType), color = NA) +
+  scale_fill_manual(
+    values = c(
+      "High-High" = "#d7191c",
+      "High-Low"  = "#fdae61",
+      "Low-High"  = "#abd9e9",
+      "Low-Low"   = "#2c7bb6",
+      "Not Significant" = "gray90"
+    ),
+    name = "Cluster Type"
+  ) +
+  labs(
+    title = "Local Moran’s I: Sanitation Violation Clusters",
+    subtitle = "High-High = Hot Spots  |  Low-Low = Cold Spots"
+  ) +
+  theme_minimal() +
+  theme(
+    plot.title = element_text(face = "bold", size = 14),
+    plot.subtitle = element_text(color = "gray40"),
+    axis.text = element_blank(),
+    axis.title = element_blank(),
+    panel.grid = element_blank()
+  )
+```
+
+Hot spots (High-High clusters) of sanitation violations concentrate mainly in the central-west and south-side neighborhoods, with small pockets on the far north and southwest. Cold or low-activity areas dominate the rest of the city. The pattern suggests that sanitation issues are spatially clustered rather than random, aligning with older, denser residential zones and areas of higher population turnover.
+
+```{r}
+hotspots <- fishnet %>%
+  filter(clusterType == "High-High") %>%
+  st_centroid()
+
+fishnet$dist_to_hotspot <- as.numeric(
+  st_distance(fishnet_centroids, hotspots %>% st_union())
+)
+
+summary(fishnet$dist_to_hotspot)
+cat("✓ Calculated distance to nearest High-High cluster\n")
+
+```
+
+#### Part 4: Count Regression Models
+
+```{r}
+fishnet_model <- fishnet %>%
+  st_drop_geometry() %>%
+  as.data.frame() %>%
+  dplyr::select(uniqueID, countSanitation, nn_meanDist, dist_to_hotspot) %>%
+  tidyr::drop_na()
+cat("✓ Modeling dataset ready with", nrow(fishnet_model), "observations\n")
+```
+
+```{r}
+model_pois <- glm(
+  countSanitation ~ nn_meanDist + dist_to_hotspot,
+  data = fishnet_model,
+  family = "poisson"
+)
+
+summary(model_pois)
+```
+
+```{r}
+dispersion <- sum(residuals(model_pois, type = "pearson")^2) /
+              model_pois$df.residual
+cat("\nDispersion parameter:", round(dispersion, 2), "\n")
+
+if (dispersion > 1.5) {
+  cat("⚠ Overdispersion detected — Negative Binomial model recommended.\n")
+} else {
+  cat("✓ Dispersion acceptable for Poisson model.\n")
+}
+```
+
+```{r}
+model_nb <- glm.nb(
+  countSanitation ~ nn_meanDist + dist_to_hotspot,
+  data = fishnet_model
+)
+
+summary(model_nb)
+```
+
+```{r}
+cat("\nModel Fit Comparison:\n")
+cat("Poisson AIC:", round(AIC(model_pois), 2), "\n")
+cat("NegBin  AIC:", round(AIC(model_nb), 2), "\n")
+```
+
+The Poisson model showed clear overdispersion (dispersion = 4.54 \> 1.5). The Negative Binomial model substantially improved fit (AIC = 11 212 vs 14 422). Both predictors were highly significant and negative: greater distance to nearby violations or to cluster centers corresponds to fewer sanitation code violations. This pattern indicates spatial clustering of violations within central and southern neighborhoods.
+
+#### Part 5: Spatial Cross-Validation (2017)
+
+```{r}
+policeDistricts <- st_read("https://data.cityofchicago.org/api/geospatial/24zt-jpfn?method=export&format=GeoJSON") %>%
+  st_transform('ESRI:102271') %>%
+  dplyr::select(District = dist_num)
+
+fishnet <- st_join(fishnet, policeDistricts, join = st_within, left = TRUE) %>%
+  filter(!is.na(District))
+
+cat("✓ Joined police districts:", length(unique(fishnet$District)), "\n")
+```
+
+```{r}
+fishnet_model <- fishnet %>%
+  st_drop_geometry() %>%
+  as.data.frame() %>%
+  dplyr::select(uniqueID, District, countSanitation, nn_meanDist, dist_to_hotspot) %>%
+  tidyr::drop_na()
+
+cat("✓ Data ready for LOGO CV with", nrow(fishnet_model), "observations\n")
+
+```
+
+```{r}
+districts <- unique(fishnet_model$District)
+cv_results <- tibble()
+
+cat("Running LOGO cross-validation across", length(districts), "districts...\n")
+
+for (i in seq_along(districts)) {
+  test_district <- districts[i]
+
+  train_data <- fishnet_model %>% filter(District != test_district)
+  test_data  <- fishnet_model %>% filter(District == test_district)
+
+  model_cv <- glm.nb(countSanitation ~ nn_meanDist + dist_to_hotspot, data = train_data)
+
+  test_data <- test_data %>%
+    mutate(prediction = predict(model_cv, newdata = test_data, type = "response"))
+
+  mae  <- mean(abs(test_data$countSanitation - test_data$prediction))
+  rmse <- sqrt(mean((test_data$countSanitation - test_data$prediction)^2))
+
+  cv_results <- bind_rows(cv_results, tibble(
+    fold = i,
+    test_district = test_district,
+    n_test = nrow(test_data),
+    MAE = mae,
+    RMSE = rmse
+  ))
+
+  cat("  Fold", i, "/", length(districts), 
+      "- District", test_district, 
+      "- MAE:", round(mae, 2), 
+      "- RMSE:", round(rmse, 2), "\n")
+}
+
+```
+
+```{r}
+cat("\n✓ LOGO Cross-Validation complete\n")
+cat("Mean MAE :", round(mean(cv_results$MAE), 2), "\n")
+cat("Mean RMSE:", round(mean(cv_results$RMSE), 2), "\n")
+```
+
+```{r}
+cv_results %>%
+  arrange(desc(MAE)) %>%
+  kable(
+    digits = 2,
+    caption = "Leave-One-District-Out Cross-Validation Results"
+  ) %>%
+  kable_styling(bootstrap_options = c("striped", "hover"))
+```
+
+To evaluate the spatial generalization of the model, a Leave-One-District-Out (LOGO) cross-validation was implemented using Chicago’s 22 police districts as spatial groups. In each fold, one district was held out for testing while the Negative Binomial model was trained on the remaining districts.
+
+Across all 22 folds, the model achieved an average Mean Absolute Error (MAE) of 4.67 and a Root Mean Squared Error (RMSE) of 7.74. These results indicate that the model performs reasonably well in predicting sanitation code violation counts for spatially unseen districts. Errors tend to be larger in central and high-density districts, reflecting the underlying spatial heterogeneity of urban sanitation violations.
+
+Overall, the LOGO cross-validation confirms that the model captures meaningful spatial patterns and maintains moderate predictive accuracy across the city.
+
+#### Part 6: Model Evaluation
+
+```{r}
+fishnet_model$pred_2017 <- predict(model_nb, newdata = fishnet_model, type = "response")
+
+cat("✓ Generated in-sample predictions for 2017\n")
+
+sanitation_2018 <- read_csv("Sanitation.csv") %>%
+  mutate(CreationDate = mdy(`Creation Date`),
+         Year = year(CreationDate)) %>%
+  filter(Year == 2018,
+         !is.na(Latitude), !is.na(Longitude)) %>%
+  st_as_sf(coords = c("Longitude", "Latitude"), crs = 4326) %>%
+  st_transform('ESRI:102271')
+
+cat("✓ Loaded 2018 sanitation records:", nrow(sanitation_2018), "\n")
+
+fishnet_2018 <- st_join(fishnet, sanitation_2018, join = st_contains) %>%
+  group_by(uniqueID) %>%
+  summarise(count2018 = n()) %>%
+  right_join(fishnet_model, by = "uniqueID") %>%
+  mutate(count2018 = ifelse(is.na(count2018), 0, count2018))
+
+cat("✓ Aggregated 2018 counts to fishnet grid\n")
+
+fishnet_2018$pred_2018 <- predict(model_nb, newdata = fishnet_2018, type = "response")
+
+fishnet_2018 <- fishnet_2018 %>%
+  mutate(error = count2018 - pred_2018)
+
+mae_2018 <- mean(abs(fishnet_2018$error))
+rmse_2018 <- sqrt(mean((fishnet_2018$error)^2))
+
+cat("✓ 2018 Temporal Validation complete\n")
+cat("MAE (2018):", round(mae_2018, 2), "\n")
+cat("RMSE (2018):", round(rmse_2018, 2), "\n")
+```
+
+```{r}
+points2017 <- sanitation_sf %>%
+  st_coordinates() %>%
+  as.data.frame()
+
+kde_2017 <- spatstat.geom::ppp(points2017$X, points2017$Y,
+                               window = spatstat.geom::as.owin(st_union(chicagoBoundary)))
+
+kde_density <- spatstat.explore::density.ppp(kde_2017, sigma = 1000) # bandwidth 1km
+
+fishnet_2018$kde_pred <- raster::extract(raster::raster(kde_density), 
+                                         st_coordinates(st_centroid(fishnet)))
+
+kde_mae  <- mean(abs(fishnet_2018$count2018 - fishnet_2018$kde_pred), na.rm = TRUE)
+kde_rmse <- sqrt(mean((fishnet_2018$count2018 - fishnet_2018$kde_pred)^2, na.rm = TRUE))
+
+cat("✓ KDE baseline complete\n")
+cat("KDE MAE:", round(kde_mae, 2), "\n")
+cat("KDE RMSE:", round(kde_rmse, 2), "\n")
+```
+
+```{r}
+ggplot() +
+  geom_sf(data = chicagoBoundary, fill = "gray95", color = "white") +
+  geom_sf(data = fishnet_2018, aes(fill = error), color = NA) +
+  scale_fill_gradient2(
+    low = "#2c7bb6",
+    mid = "white",
+    high = "#d7191c",
+    midpoint = 0,
+    name = "Prediction Error"
+  ) +
+  labs(
+    title = "Prediction Errors for 2018 (Observed - Predicted)",
+    subtitle = "Negative Binomial Model",
+    caption = "Blue = Overprediction, Red = Underprediction"
+  ) +
+  theme_minimal() +
+  theme(
+    plot.title = element_text(face = "bold", size = 14),
+    plot.subtitle = element_text(color = "gray40"),
+    axis.text = element_blank(),
+    axis.title = element_blank(),
+    panel.grid = element_blank()
+  )
+```
+
+The Negative Binomial model was trained on 2017 sanitation violations and then applied to predict 2018 counts at the 500 m grid level. Model predictions were compared against observed 2018 violations and against a kernel density estimation (KDE) baseline.
+
+Predictive accuracy (temporal validation): The model achieved MAE = 5.05 and RMSE = 7.84, substantially lower than the KDE baseline (MAE = 8.67, RMSE = 12.55). This indicates the regression model generalizes well across time and captures spatial drivers of violation occurrence that simple hotspot persistence (KDE) cannot.
+
+Spatial pattern of errors (map): The map of 2018 prediction errors shows:
+
+Blue cells (over-prediction): areas where the model predicted more violations than actually occurred—often along the southern and western edges of Chicago.
+
+Red cells (under-prediction): locations where observed violations exceeded predictions, mainly clustered in older central neighborhoods. This spatial structure suggests that some unmodeled factors—such as local inspection policies or demographic changes—still influence violation frequency.
+
+Overall assessment: The Negative Binomial model improves predictive performance over both Poisson and KDE approaches. It handles overdispersion and learns spatial correlates of sanitation activity, making it more robust for forecasting future 311 requests.
+
+#### CHALLENGE TASK: Temporal Validation (2018)
+
+```{r}
+crime_2018 <- read_csv("https://data.cityofchicago.org/resource/3i3m-jwuy.csv")
+
+crime_2018_burg <- crime_2018 %>%
+  filter(primary_type == "BURGLARY",
+         description == "FORCIBLE ENTRY",
+         !is.na(longitude), !is.na(latitude)) %>%
+  mutate(year = year(as_date(date)))
+
+# 检查数量
+nrow(crime_2018_burg)
+```
+
+```{r}
+crime_2018_sf <- st_as_sf(
+  crime_2018_burg,
+  coords = c("longitude", "latitude"),
+  crs = 4326
+) %>%
+  st_transform(st_crs(fishnet))
+
+counts_crime_2018 <- st_join(fishnet, crime_2018_sf, join = st_contains) %>%
+  st_drop_geometry() %>%
+  count(uniqueID, name = "countCrime2018")
+
+fishnet_crime_2018 <- fishnet %>%
+  left_join(counts_crime_2018, by = "uniqueID") %>%
+  mutate(countCrime2018 = replace_na(countCrime2018, 0))
+```
+
+```{r}
+fishnet_crime_2018$predCrime <- predict(
+  model_nb,
+  newdata = fishnet_crime_2018 %>% st_drop_geometry(),
+  type = "response"
+)
+
+fishnet_crime_2018 <- fishnet_crime_2018 %>%
+  mutate(error = countCrime2018 - predCrime)
+
+mae_crime <- mean(abs(fishnet_crime_2018$error))
+rmse_crime <- sqrt(mean((fishnet_crime_2018$error)^2))
+
+cat("2018 Burglary Temporal Validation → MAE:", round(mae_crime, 2),
+    " RMSE:", round(rmse_crime, 2), "\n")
+```
+
+```{r}
+ggplot() +
+  geom_sf(data = chicagoBoundary, fill = "gray95", color = "white") +
+  geom_sf(data = fishnet_crime_2018, aes(fill = error), color = NA) +
+  scale_fill_gradient2(low = "#2c7bb6", mid = "white", high = "#d7191c",
+                       midpoint = 0, name = "Error (Obs - Pred)") +
+  labs(title = "2018 Burglary (FORCIBLE ENTRY) Prediction Errors",
+       subtitle = "Predicted using 2017 Sanitation Model",
+       caption = "Blue = Overprediction, Red = Underprediction") +
+  theme_minimal() +
+    theme(
+    plot.title = element_text(face = "bold", size = 14),
+    plot.subtitle = element_text(color = "gray40"),
+    axis.text = element_blank(),
+    axis.title = element_blank(),
+    panel.grid = element_blank()
+  )
+
+```
+
+The 2018 burglary prediction errors show systematic overprediction (predicted counts higher than observed), indicating limited transferability of the sanitation-based model to crime patterns. Moreover, the Poisson model was found to be overdispersed (variance ≫ mean), justifying the use of a Negative Binomial specification, which effectively reweights the variance structure to better model spatially heterogeneous count data.
+
+## Step 3: Analysis
+
+### Overview
+
+This project builds a spatial predictive model of sanitation-related 311 service requests in Chicago for 2017–2018. Using a 500 m × 500 m fishnet grid as the spatial unit, the analysis combines descriptive mapping, spatial autocorrelation diagnostics, and count regression models to understand and predict the geographic distribution of sanitation code violations.
+
+Spatial clustering and model diagnostics show that these urban service complaints are not randomly distributed. Instead, they exhibit strong spatial dependence—particularly along the South and West Sides—reflecting the persistence of neighborhood-level environmental and socioeconomic inequalities.
+
+------------------------------------------------------------------------
+
+### 1. Spatial Clustering
+
+Exploratory mapping revealed clear spatial concentrations of sanitation violations. Local Moran’s I confirmed statistically significant **High-High clusters** (hotspots) in central-west and south-side neighborhoods, while **Low-Low clusters** occurred in more peripheral or affluent areas.\
+This indicates that sanitation complaints follow patterns of older housing stock, population turnover, and varying municipal service responsiveness.
+
+------------------------------------------------------------------------
+
+### 2. Count Regression Modeling
+
+Both Poisson and Negative Binomial (NB) count models were fit to predict the number of violations per grid cell using two spatial covariates:
+
+-   **Mean distance to nearest 3 sanitation events (nn_meanDist)**
+-   **Distance to the nearest high-high cluster centroid (dist_to_hotspot)**
+
+The Poisson model exhibited **overdispersion** (dispersion = 4.54 ≫ 1.5), meaning that the variance of counts greatly exceeded the mean.\
+The NB model corrected this issue and achieved a much better fit (AIC = 11 212 vs 14 422 for Poisson), validating the choice of a variance-adjusted count specification.\
+Both predictors were significantly negative, showing that proximity to existing violations and hotspots strongly increases expected complaint frequency.
+
+------------------------------------------------------------------------
+
+### 3. Spatial Cross-Validation (2017)
+
+A **Leave-One-District-Out (LOGO)** cross-validation using Chicago’s 22 police districts assessed spatial generalizability.\
+The model achieved **Mean MAE = 4.67** and **Mean RMSE = 7.74**, confirming moderate predictive power in unseen areas.\
+Prediction errors were larger in dense downtown and inner-south districts, highlighting the spatial heterogeneity of urban sanitation behavior.
+
+------------------------------------------------------------------------
+
+### 4. Temporal Validation (2018)
+
+Applying the 2017 NB model to 2018 sanitation data yielded **MAE = 5.05** and **RMSE = 7.84**, outperforming a non-parametric **KDE baseline** (MAE = 8.67, RMSE = 12.55).\
+The model successfully generalized across years, indicating that neighborhood-level structural factors—rather than year-specific policy noise—drive much of the spatial pattern in 311 sanitation requests.
+
+The 2018 error map showed: - **Blue areas (overprediction)** around southern and western peripheries\
+- **Red areas (underprediction)** concentrated in inner neighborhoods where new complaints emerged in 2018
+
+These differences likely stem from unmodeled local dynamics such as inspection intensity, redevelopment, or seasonal population change.
+
+------------------------------------------------------------------------
+
+### 5. Challenge Task: Cross-Domain Validation (2018 Burglary)
+
+The 2017 sanitation model was tested on **2018 burglary (forcible entry)** events to evaluate cross-domain transferability.\
+Results showed systematic **overprediction** across most grid cells, meaning that the model assumed crime would occur with similar spatial intensity as sanitation violations.\
+This demonstrates that while spatial autocorrelation structures are similar across urban phenomena, the underlying generative mechanisms (social, behavioral, or policing factors) differ substantially.
+
+Such overprediction underscores the **domain specificity** of spatial count processes and the importance of incorporating domain-relevant variables when extending predictive models to new phenomena.
+
+------------------------------------------------------------------------
+
+### 6. Interpretation
+
+1.  **Spatial dependence matters:** Incorporating local spatial features (e.g., nearest-neighbor distances) substantially improves prediction over simple density persistence models.\
+2.  **Overdispersion is the rule, not the exception:** Urban event counts rarely meet Poisson variance assumptions; the Negative Binomial model offers a practical correction by weighting variance heterogeneity.\
+3.  **Temporal generalization is feasible:** Structural neighborhood effects remain stable across years.\
+4.  **Cross-domain generalization is limited:** Models trained on sanitation data poorly capture crime patterns, revealing that social drivers differ even when spatial clustering appears similar.
+
+------------------------------------------------------------------------
+
+Spatially explicit predictive modeling of 311 sanitation complaints can help city agencies prioritize inspection and maintenance resources more efficiently.\
+However, models must remain adaptive—incorporating updated data, temporal shifts, and behavioral heterogeneity—to avoid reinforcing historical inequalities in service delivery.\
+For broader urban analytics, this exercise shows both the potential and the limits of spatial transfer learning in complex social environments.

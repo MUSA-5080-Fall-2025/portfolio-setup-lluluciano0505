@@ -7,7 +7,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 <meta name="author" content="Your Name Here">
-<meta name="dcterms.date" content="2025-10-27">
+<meta name="dcterms.date" content="2025-11-05">
 
 <title>Assignment 2: Spatial Analysis and Visualization – Luciano Lu - MUSA 5080 Portfolio</title>
 <style>
@@ -3954,27 +3954,15 @@ vertical-align: -.125em;
     <h2 id="toc-title">On this page</h2>
    
   <ul>
-  <li><a href="#assignment-overview" id="toc-assignment-overview" class="nav-link active" data-scroll-target="#assignment-overview">Assignment Overview</a></li>
-  <li><a href="#part-1-healthcare-access-for-vulnerable-populations" id="toc-part-1-healthcare-access-for-vulnerable-populations" class="nav-link" data-scroll-target="#part-1-healthcare-access-for-vulnerable-populations">Part 1: Healthcare Access for Vulnerable Populations</a>
-  <ul class="collapse">
-  <li><a href="#research-question" id="toc-research-question" class="nav-link" data-scroll-target="#research-question">Research Question</a></li>
-  <li><a href="#required-analysis-steps" id="toc-required-analysis-steps" class="nav-link" data-scroll-target="#required-analysis-steps">Required Analysis Steps</a></li>
-  </ul></li>
+  <li><a href="#part-1-healthcare-access-for-vulnerable-populations" id="toc-part-1-healthcare-access-for-vulnerable-populations" class="nav-link active" data-scroll-target="#part-1-healthcare-access-for-vulnerable-populations">Part 1: Healthcare Access for Vulnerable Populations</a></li>
   <li><a href="#part-2-comprehensive-visualization" id="toc-part-2-comprehensive-visualization" class="nav-link" data-scroll-target="#part-2-comprehensive-visualization">Part 2: Comprehensive Visualization</a>
   <ul class="collapse">
   <li><a href="#map-1-county-level-choropleth" id="toc-map-1-county-level-choropleth" class="nav-link" data-scroll-target="#map-1-county-level-choropleth">Map 1: County-Level Choropleth</a></li>
   <li><a href="#map-2-detailed-vulnerability-map" id="toc-map-2-detailed-vulnerability-map" class="nav-link" data-scroll-target="#map-2-detailed-vulnerability-map">Map 2: Detailed Vulnerability Map</a></li>
   <li><a href="#chart-distribution-analysis" id="toc-chart-distribution-analysis" class="nav-link" data-scroll-target="#chart-distribution-analysis">Chart: Distribution Analysis</a></li>
   </ul></li>
-  <li><a href="#part-3-bring-your-own-data-analysis" id="toc-part-3-bring-your-own-data-analysis" class="nav-link" data-scroll-target="#part-3-bring-your-own-data-analysis">Part 3: Bring Your Own Data Analysis</a>
-  <ul class="collapse">
-  <li><a href="#challenge-options" id="toc-challenge-options" class="nav-link" data-scroll-target="#challenge-options">Challenge Options</a></li>
-  <li><a href="#data-sources" id="toc-data-sources" class="nav-link" data-scroll-target="#data-sources">Data Sources</a></li>
-  <li><a href="#recommended-starting-points" id="toc-recommended-starting-points" class="nav-link" data-scroll-target="#recommended-starting-points">Recommended Starting Points</a></li>
-  <li><a href="#your-analysis" id="toc-your-analysis" class="nav-link" data-scroll-target="#your-analysis">Your Analysis</a></li>
-  </ul></li>
+  <li><a href="#part-3-own-data-analysis" id="toc-part-3-own-data-analysis" class="nav-link" data-scroll-target="#part-3-own-data-analysis">Part 3: Own Data Analysis</a></li>
   <li><a href="#finally---a-few-comments-about-your-incorporation-of-feedback" id="toc-finally---a-few-comments-about-your-incorporation-of-feedback" class="nav-link" data-scroll-target="#finally---a-few-comments-about-your-incorporation-of-feedback">Finally - A few comments about your incorporation of feedback!</a></li>
-  <li><a href="#submission-requirements" id="toc-submission-requirements" class="nav-link" data-scroll-target="#submission-requirements">Submission Requirements</a></li>
   </ul>
 </nav>
 </nav>
@@ -4005,7 +3993,7 @@ vertical-align: -.125em;
     <div>
     <div class="quarto-title-meta-heading">Published</div>
     <div class="quarto-title-meta-contents">
-      <p class="date">October 27, 2025</p>
+      <p class="date">November 5, 2025</p>
     </div>
   </div>
   
@@ -4017,24 +4005,9 @@ vertical-align: -.125em;
 </header>
 
 
-<section id="assignment-overview" class="level2">
-<h2 class="anchored" data-anchor-id="assignment-overview">Assignment Overview</h2>
-<p><strong>Learning Objectives:</strong> - Apply spatial operations to answer policy-relevant research questions - Integrate census demographic data with spatial analysis - Create publication-quality visualizations and maps - Work with spatial data from multiple sources - Communicate findings effectively for policy audiences</p>
 <hr>
-</section>
 <section id="part-1-healthcare-access-for-vulnerable-populations" class="level2">
 <h2 class="anchored" data-anchor-id="part-1-healthcare-access-for-vulnerable-populations">Part 1: Healthcare Access for Vulnerable Populations</h2>
-<section id="research-question" class="level3">
-<h3 class="anchored" data-anchor-id="research-question">Research Question</h3>
-<p><strong>Which Pennsylvania counties have the highest proportion of vulnerable populations (elderly + low-income) living far from hospitals?</strong></p>
-<p>Your analysis should identify counties that should be priorities for healthcare investment and policy intervention.</p>
-</section>
-<section id="required-analysis-steps" class="level3">
-<h3 class="anchored" data-anchor-id="required-analysis-steps">Required Analysis Steps</h3>
-<p>Complete the following analysis, documenting each step with code and brief explanations:</p>
-<section id="step-1-data-collection-5-points" class="level4">
-<h4 class="anchored" data-anchor-id="step-1-data-collection-5-points">Step 1: Data Collection (5 points)</h4>
-<p>Load the required spatial data: - Pennsylvania county boundaries - Pennsylvania hospitals (from lecture data) - Pennsylvania census tracts</p>
 <p><strong>Your Task:</strong></p>
 <div class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Load required packages</span></span>
@@ -4103,15 +4076,9 @@ $geom_tracts
 18 Levels: GEOMETRY POINT LINESTRING POLYGON MULTIPOINT ... TRIANGLE</code></pre>
 </div>
 </div>
-<p><strong>Questions to answer:</strong> How many hospitals are in your dataset? There are 223 hospitals in Pennsylvania according to the provided dataset.</p>
-<p>How many census tracts? There are 3,445 census tracts across the state.</p>
-<p>What coordinate reference system is each dataset in? All three layers (counties, hospitals, tracts) are currently in WGS 84 / Pseudo-Mercator (EPSG:3857). —</p>
-</section>
+<p>There are 223 hospitals in Pennsylvania according to the provided dataset. There are 3,445 census tracts across the state. All three layers (counties, hospitals, tracts) are currently in WGS 84 / Pseudo-Mercator (EPSG:3857). —</p>
 <section id="step-2-get-demographic-data" class="level4">
 <h4 class="anchored" data-anchor-id="step-2-get-demographic-data">Step 2: Get Demographic Data</h4>
-<p>Use <code>tidycensus</code> to download tract-level demographic data for Pennsylvania.</p>
-<p><strong>Required variables:</strong> - Total population - Median household income - Population 65 years and over (you may need to sum multiple age categories)</p>
-<p><strong>Your Task:</strong></p>
 <div class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Get demographic data from ACS</span></span>
 <span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="co"># 1) Set ACS year</span></span>
@@ -4186,13 +4153,10 @@ $median_income_all_tracts
 [1] 70188</code></pre>
 </div>
 </div>
-<p><strong>Questions to answer:</strong> - What year of ACS data are you using? - How many tracts have missing income data? - What is the median income across all PA census tracts?</p>
 <p>ACS year used: 2022 (5-year estimates) Number of census tracts in dataset: 3,445 Tracts with missing income data: 62 Median household income across all PA tracts: $70,188 —</p>
 </section>
 <section id="step-3-define-vulnerable-populations" class="level4">
 <h4 class="anchored" data-anchor-id="step-3-define-vulnerable-populations">Step 3: Define Vulnerable Populations</h4>
-<p>Identify census tracts with vulnerable populations based on TWO criteria: 1. Low median household income (choose an appropriate threshold) 2. Significant elderly population (choose an appropriate threshold)</p>
-<p><strong>Your Task:</strong></p>
 <div class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Filter for vulnerable tracts based on your criteria</span></span>
 <span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="co"># 1) Define thresholds</span></span>
@@ -4231,13 +4195,11 @@ $pct_vulnerable
 [1] 7.3</code></pre>
 </div>
 </div>
-<p><strong>Questions to answer:</strong> - What income threshold did you choose and why I chose $50,000 as the income threshold. This is well below Pennsylvania’s overall tract-level median income of about $70,000. - What elderly population threshold did you choose and why? I chose 17% elderly population as the threshold, which is slightly above the national average (~16–17%). - How many tracts meet your vulnerability criteria? There are 524 census tracts in Pennsylvania that meet the vulnerability criteria. - What percentage of PA census tracts are considered vulnerable by your definition? About 7.3% of Pennsylvania’s 3,445 census tracts fall into this vulnerable category.</p>
+<p>I chose $50,000 as the income threshold. This is well below Pennsylvania’s overall tract-level median income of about $70,000. I chose 17% elderly population as the threshold, which is slightly above the national average (~16–17%). There are 524 census tracts in Pennsylvania that meet the vulnerability criteria. About 7.3% of Pennsylvania’s 3,445 census tracts fall into this vulnerable category.</p>
 <hr>
 </section>
 <section id="step-4-calculate-distance-to-hospitals" class="level4">
 <h4 class="anchored" data-anchor-id="step-4-calculate-distance-to-hospitals">Step 4: Calculate Distance to Hospitals</h4>
-<p>For each vulnerable tract, calculate the distance to the nearest hospital.</p>
-<p><strong>Your Task:</strong></p>
 <div class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Transform to appropriate projected CRS</span></span>
 <span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>census_tracts_proj <span class="ot">&lt;-</span> <span class="fu">st_transform</span>(census_tracts_demo, <span class="dv">5070</span>)</span>
@@ -4261,15 +4223,11 @@ $pct_vulnerable
  0.02107  0.83908  1.80602  3.27466  3.55821 18.64304 </code></pre>
 </div>
 </div>
-<p><strong>Requirements:</strong> - Use an appropriate projected coordinate system for Pennsylvania - Calculate distances in miles - Explain why you chose your projection</p>
 <p>This projection uses meters as its unit, which avoids distortions from geographic CRS like WGS84 (degrees), so distances can be directly converted to miles.</p>
-<p><strong>Questions to answer:</strong> - What is the average distance to the nearest hospital for vulnerable tracts? - What is the maximum distance? - How many vulnerable tracts are more than 15 miles from the nearest hospital?</p>
 <p>The average distance is about 3.27 miles. The maximum distance from a vulnerable tract centroid to the nearest hospital is about 18.6 miles. By checking the distance distribution, only a small number of vulnerable tracts (likely fewer than 5) are more than 15 miles away. —</p>
 </section>
 <section id="step-5-identify-underserved-areas" class="level4">
 <h4 class="anchored" data-anchor-id="step-5-identify-underserved-areas">Step 5: Identify Underserved Areas</h4>
-<p>Define “underserved” as vulnerable tracts that are more than 15 miles from the nearest hospital.</p>
-<p><strong>Your Task:</strong></p>
 <div class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb9"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Create underserved variable</span></span>
 <span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>tract_centroids <span class="ot">&lt;-</span> tract_centroids <span class="sc">%&gt;%</span></span>
@@ -4297,13 +4255,11 @@ $pct_vulnerable_underserved
 [1] 2.8</code></pre>
 </div>
 </div>
-<p><strong>Questions to answer:</strong> - How many tracts are underserved? - What percentage of vulnerable tracts are underserved? - Does this surprise you? Why or why not? 7 tracts meet the definition. 2.8% of vulnerable tracts are undeserved.This result is not very surprising. Most of Pennsylvania’s population—and thus its healthcare infrastructure—is concentrated in urban and suburban counties. Rural areas may have some underserved tracts, but they are relatively few in number.</p>
+<p>7 tracts meet the definition. 2.8% of vulnerable tracts are undeserved.This result is not very surprising. Most of Pennsylvania’s population—and thus its healthcare infrastructure—is concentrated in urban and suburban counties. Rural areas may have some underserved tracts, but they are relatively few in number.</p>
 <hr>
 </section>
 <section id="step-6-aggregate-to-county-level" class="level4">
 <h4 class="anchored" data-anchor-id="step-6-aggregate-to-county-level">Step 6: Aggregate to County Level</h4>
-<p>Use spatial joins and aggregation to calculate county-level statistics about vulnerable populations and hospital access.</p>
-<p><strong>Your Task:</strong></p>
 <div class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb11"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Spatial join tracts to counties</span></span>
 <span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>pa_counties_proj <span class="ot">&lt;-</span> <span class="fu">st_transform</span>(pa_counties, <span class="dv">5070</span>)</span>
@@ -4342,15 +4298,10 @@ $pct_vulnerable_underserved
 # ℹ 2 more variables: avg_distance_vuln_mi &lt;dbl&gt;, vulnerable_population &lt;dbl&gt;</code></pre>
 </div>
 </div>
-<p><strong>Required county-level statistics:</strong> - Number of vulnerable tracts - Number of underserved tracts<br>
-- Percentage of vulnerable tracts that are underserved - Average distance to nearest hospital for vulnerable tracts - Total vulnerable population</p>
-<p><strong>Questions to answer:</strong> - Which 5 counties have the highest percentage of underserved vulnerable tracts? - Which counties have the most vulnerable people living far from hospitals? - Are there any patterns in where underserved counties are located?</p>
 <p>Cameron (100%) – 1 vulnerable tract, and it is underserved. Forest (100%) – 2 vulnerable tracts, both underserved. Monroe (100%) – 1 vulnerable tract, underserved. Clearfield (66.7%) – 3 vulnerable tracts, 2 underserved. Juniata (50%) – 2 vulnerable tracts, 1 underserved. From the current table, counties like Cameron, Forest, and Clearfield stand out, because although they don’t have many tracts, nearly all of their vulnerable tracts are underserved and the average distance to the nearest hospital is 15–19 miles. Yes. The underserved counties are concentrated in rural and sparsely populated areas (Northern and Central Pennsylvania: Cameron, Forest, Clearfield, Juniata). These counties have few hospitals and residents often face long travel times. —</p>
 </section>
 <section id="step-7-create-summary-table" class="level4">
 <h4 class="anchored" data-anchor-id="step-7-create-summary-table">Step 7: Create Summary Table</h4>
-<p>Create a professional table showing the top 10 priority counties for healthcare investment.</p>
-<p><strong>Your Task:</strong></p>
 <div class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb13"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Create and format priority counties table</span></span>
 <span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>priority_counties <span class="ot">&lt;-</span> county_stats <span class="sc">%&gt;%</span></span>
@@ -4482,17 +4433,12 @@ $pct_vulnerable_underserved
 </table>
 </div>
 </div>
-<p><strong>Requirements:</strong> - Use <code>knitr::kable()</code> or similar for formatting - Include descriptive column names - Format numbers appropriately (commas for population, percentages, etc.) - Add an informative caption - Sort by priority (you decide the metric)</p>
-<hr>
-</section>
 </section>
 </section>
 <section id="part-2-comprehensive-visualization" class="level2">
 <h2 class="anchored" data-anchor-id="part-2-comprehensive-visualization">Part 2: Comprehensive Visualization</h2>
-<p>Using the skills from Week 3 (Data Visualization), create publication-quality maps and charts.</p>
 <section id="map-1-county-level-choropleth" class="level3">
 <h3 class="anchored" data-anchor-id="map-1-county-level-choropleth">Map 1: County-Level Choropleth</h3>
-<p>Create a choropleth map showing healthcare access challenges at the county level.</p>
 <p><strong>Your Task:</strong></p>
 <div class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb14"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Create detailed tract-level map</span></span>
@@ -4553,8 +4499,6 @@ $pct_vulnerable_underserved
 </section>
 <section id="map-2-detailed-vulnerability-map" class="level3">
 <h3 class="anchored" data-anchor-id="map-2-detailed-vulnerability-map">Map 2: Detailed Vulnerability Map</h3>
-<p>Create a map highlighting underserved vulnerable tracts.</p>
-<p><strong>Your Task:</strong></p>
 <div class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb15"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a>tracts_final <span class="ot">&lt;-</span> census_tracts_demo <span class="sc">%&gt;%</span></span>
 <span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">left_join</span>(</span>
@@ -4606,13 +4550,10 @@ $pct_vulnerable_underserved
 </div>
 </div>
 </div>
-<p><strong>Requirements:</strong> - Show underserved vulnerable tracts in a contrasting color - Include county boundaries for context - Show hospital locations - Use appropriate visual hierarchy (what should stand out?) - Include informative title and subtitle</p>
-<hr>
 </section>
 <section id="chart-distribution-analysis" class="level3">
 <h3 class="anchored" data-anchor-id="chart-distribution-analysis">Chart: Distribution Analysis</h3>
 <p>Create a visualization showing the distribution of distances to hospitals for vulnerable populations.</p>
-<p><strong>Your Task:</strong></p>
 <div class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb16"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Create distribution visualization</span></span>
 <span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a>vuln <span class="ot">&lt;-</span> tract_centroids <span class="sc">%&gt;%</span></span>
@@ -4637,75 +4578,11 @@ $pct_vulnerable_underserved
 </div>
 </div>
 </div>
-<p><strong>Suggested chart types:</strong> - Histogram or density plot of distances - Box plot comparing distances across regions - Bar chart of underserved tracts by county - Scatter plot of distance vs. vulnerable population size</p>
-<p><strong>Requirements:</strong> - Clear axes labels with units - Appropriate title - Professional formatting - Brief interpretation (1-2 sentences as a caption or in text)</p>
 <hr>
 </section>
 </section>
-<section id="part-3-bring-your-own-data-analysis" class="level2">
-<h2 class="anchored" data-anchor-id="part-3-bring-your-own-data-analysis">Part 3: Bring Your Own Data Analysis</h2>
-<p>Choose your own additional spatial dataset and conduct a supplementary analysis.</p>
-<section id="challenge-options" class="level3">
-<h3 class="anchored" data-anchor-id="challenge-options">Challenge Options</h3>
-<p>Choose ONE of the following challenge exercises, or propose your own research question using OpenDataPhilly data (https://opendataphilly.org/datasets/).</p>
-<p><strong>Note these are just loose suggestions to spark ideas - follow or make your own as the data permits and as your ideas evolve. This analysis should include bringing in your own dataset, ensuring the projection/CRS of your layers align and are appropriate for the analysis (not lat/long or geodetic coordinate systems). The analysis portion should include some combination of spatial and attribute operations to answer a relatively straightforward question</strong></p>
-<hr>
-<section id="education-youth-services" class="level4">
-<h4 class="anchored" data-anchor-id="education-youth-services">Education &amp; Youth Services</h4>
-<p><strong>Option A: Educational Desert Analysis</strong> - <strong>Data:</strong> Schools, Libraries, Recreation Centers, Census tracts (child population) - <strong>Question:</strong> “Which neighborhoods lack adequate educational infrastructure for children?” - <strong>Operations:</strong> Buffer schools/libraries (0.5 mile walking distance), identify coverage gaps, overlay with child population density - <strong>Policy relevance:</strong> School district planning, library placement, after-school program siting</p>
-<p><strong>Option B: School Safety Zones</strong> - <strong>Data:</strong> Schools, Crime Incidents, Bike Network - <strong>Question:</strong> “Are school zones safe for walking/biking, or are they crime hotspots?” - <strong>Operations:</strong> Buffer schools (1000ft safety zone), spatial join with crime incidents, assess bike infrastructure coverage - <strong>Policy relevance:</strong> Safe Routes to School programs, crossing guard placement</p>
-<hr>
-</section>
-<section id="environmental-justice" class="level4">
-<h4 class="anchored" data-anchor-id="environmental-justice">Environmental Justice</h4>
-<p><strong>Option C: Green Space Equity</strong> - <strong>Data:</strong> Parks, Street Trees, Census tracts (race/income demographics) - <strong>Question:</strong> “Do low-income and minority neighborhoods have equitable access to green space?” - <strong>Operations:</strong> Buffer parks (10-minute walk = 0.5 mile), calculate tree canopy or park acreage per capita, compare by demographics - <strong>Policy relevance:</strong> Climate resilience, environmental justice, urban forestry investment —</p>
-</section>
-<section id="public-safety-justice" class="level4">
-<h4 class="anchored" data-anchor-id="public-safety-justice">Public Safety &amp; Justice</h4>
-<p><strong>Option D: Crime &amp; Community Resources</strong> - <strong>Data:</strong> Crime Incidents, Recreation Centers, Libraries, Street Lights - <strong>Question:</strong> “Are high-crime areas underserved by community resources?” - <strong>Operations:</strong> Aggregate crime counts to census tracts or neighborhoods, count community resources per area, spatial correlation analysis - <strong>Policy relevance:</strong> Community investment, violence prevention strategies —</p>
-</section>
-<section id="infrastructure-services" class="level4">
-<h4 class="anchored" data-anchor-id="infrastructure-services">Infrastructure &amp; Services</h4>
-<p><strong>Option E: Polling Place Accessibility</strong> - <strong>Data:</strong> Polling Places, SEPTA stops, Census tracts (elderly population, disability rates) - <strong>Question:</strong> “Are polling places accessible for elderly and disabled voters?” - <strong>Operations:</strong> Buffer polling places and transit stops, identify vulnerable populations, find areas lacking access - <strong>Policy relevance:</strong> Voting rights, election infrastructure, ADA compliance</p>
-<hr>
-</section>
-<section id="health-wellness" class="level4">
-<h4 class="anchored" data-anchor-id="health-wellness">Health &amp; Wellness</h4>
-<p><strong>Option F: Recreation &amp; Population Health</strong> - <strong>Data:</strong> Recreation Centers, Playgrounds, Parks, Census tracts (demographics) - <strong>Question:</strong> “Is lack of recreation access associated with vulnerable populations?” - <strong>Operations:</strong> Calculate recreation facilities per capita by neighborhood, buffer facilities for walking access, overlay with demographic indicators - <strong>Policy relevance:</strong> Public health investment, recreation programming, obesity prevention</p>
-<hr>
-</section>
-<section id="emergency-services" class="level4">
-<h4 class="anchored" data-anchor-id="emergency-services">Emergency Services</h4>
-<p><strong>Option G: EMS Response Coverage</strong> - <strong>Data:</strong> Fire Stations, EMS stations, Population density, High-rise buildings - <strong>Question:</strong> “Are population-dense areas adequately covered by emergency services?” - <strong>Operations:</strong> Create service area buffers (5-minute drive = ~2 miles), assess population coverage, identify gaps in high-density areas - <strong>Policy relevance:</strong> Emergency preparedness, station siting decisions</p>
-<hr>
-</section>
-<section id="arts-culture" class="level4">
-<h4 class="anchored" data-anchor-id="arts-culture">Arts &amp; Culture</h4>
-<p><strong>Option H: Cultural Asset Distribution</strong> - <strong>Data:</strong> Public Art, Museums, Historic sites/markers, Neighborhoods - <strong>Question:</strong> “Do all neighborhoods have equitable access to cultural amenities?” - <strong>Operations:</strong> Count cultural assets per neighborhood, normalize by population, compare distribution across demographic groups - <strong>Policy relevance:</strong> Cultural equity, tourism, quality of life, neighborhood identity</p>
-<hr>
-</section>
-</section>
-<section id="data-sources" class="level3">
-<h3 class="anchored" data-anchor-id="data-sources">Data Sources</h3>
-<p><strong>OpenDataPhilly:</strong> https://opendataphilly.org/datasets/ - Most datasets available as GeoJSON, Shapefile, or CSV with coordinates - Always check the Metadata for a data dictionary of the fields.</p>
-<p><strong>Additional Sources:</strong> - <strong>Pennsylvania Open Data:</strong> https://data.pa.gov/ - <strong>Census Bureau (via tidycensus):</strong> Demographics, economic indicators, commute patterns - <strong>TIGER/Line (via tigris):</strong> Geographic boundaries</p>
-</section>
-<section id="recommended-starting-points" class="level3">
-<h3 class="anchored" data-anchor-id="recommended-starting-points">Recommended Starting Points</h3>
-<p><strong>If you’re feeling confident:</strong> Choose an advanced challenge with multiple data layers. <strong>If you are a beginner, choose something more manageable that helps you understand the basics</strong></p>
-<p><strong>If you have a different idea:</strong> Propose your own question! Just make sure: - You can access the spatial data - You can perform at least 2 spatial operations</p>
-</section>
-<section id="your-analysis" class="level3">
-<h3 class="anchored" data-anchor-id="your-analysis">Your Analysis</h3>
-<p><strong>Your Task:</strong></p>
-<ol type="1">
-<li><strong>Find and load additional data</strong>
-<ul>
-<li>Document your data source</li>
-<li>Check and standardize the CRS</li>
-<li>Provide basic summary statistics</li>
-</ul></li>
-</ol>
+<section id="part-3-own-data-analysis" class="level2">
+<h2 class="anchored" data-anchor-id="part-3-own-data-analysis">Part 3: Own Data Analysis</h2>
 <div class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb17"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Load your additional dataset</span></span>
 <span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a><span class="co"># ---- Load Schools (fixed) ----</span></span>
@@ -4850,7 +4727,6 @@ $enrollment_summary
 1                     333               446        548.4715</code></pre>
 </div>
 </div>
-<p><strong>Questions to answer:</strong> - What dataset did you choose and why? - What is the data source and date? - How many features does it contain? - What CRS is it in? Did you need to transform it?</p>
 <p>Schools (School Facilities) – Philadelphia. I chose it to assess educational access equity. School locations allow tract-level coverage analysis and policy-relevant siting insights.</p>
 <p>Source: OpenDataPhilly, “School Facilities” (GeoJSON). Date: Retrieved for this assignment (documented in code and file list). The layer is maintained by the City of Philadelphia Department of Planning and Development.</p>
 <p>495 features in the loaded file.</p>
@@ -4989,33 +4865,15 @@ $enrollment_summary
 2 42101009300     8.411688        694</code></pre>
 </div>
 </div>
-<p><strong>Analysis requirements:</strong> - Clear code comments explaining each step - Appropriate CRS transformations - Summary statistics or counts - At least one map showing your findings - Brief interpretation of results (3-5 sentences)</p>
-<p><strong>Your interpretation:</strong></p>
 <p>Why this projection?</p>
 <p>I run all operations in EPSG:2272 (NAD83 / Pennsylvania South ftUS). This StatePlane system minimizes distortion over Philadelphia and uses feet, which fits walk buffers and area calculations in miles/feet. The city publishes many layers in this CRS, so joins stay precise and distances do not inherit Web-Mercator scale errors.</p>
 <p>Why a 0.25-mile threshold for younger students?</p>
 <p>0.25 mile ≈ 1,320 ft ≈ a 5-minute walk at ~3 mph (3 mi/hr → 264 ft/min; 5 min → 1,320 ft). A five-minute target reflects comfort and supervision needs for younger children. Elementary pupils often walk more slowly, face more frequent stops, and require safer crossings. A 0.25-mile standard sets a conservative, child-appropriate access goal; 0.5 mile remains a reasonable secondary benchmark for older students and caregivers.</p>
 <p>The map shows high elementary walk access across the urban core. Coverage drops at the edges of the city and in a few industrial or low-density tracts. With a 0.5-mile buffer, only a small share of tracts qualify as “deserts,” and most do not have large child populations. A stricter 0.25-mile buffer reveals more low-coverage tracts and brings a few high-child-count areas (42101034802 and 42101009300) into view. These priority tracts warrant near-term attention through safe-routes upgrades, school siting adjustments, or co-located youth services.</p>
 </section>
-</section>
 <section id="finally---a-few-comments-about-your-incorporation-of-feedback" class="level2">
 <h2 class="anchored" data-anchor-id="finally---a-few-comments-about-your-incorporation-of-feedback">Finally - A few comments about your incorporation of feedback!</h2>
 <p>After the first assignment, I focused on making my analysis more structured and easier to read. I reorganized the Markdown file by grouping related visuals and adding short introductory sentences before each figure to explain its purpose.</p>
-<hr>
-</section>
-<section id="submission-requirements" class="level2">
-<h2 class="anchored" data-anchor-id="submission-requirements">Submission Requirements</h2>
-<p><strong>What to submit:</strong></p>
-<ol type="1">
-<li><strong>Rendered HTML document posted to your course portfolio</strong> with all code, outputs, maps, and text
-<ul>
-<li>Use <code>embed-resources: true</code> in YAML so it’s a single file</li>
-<li>All code should run without errors</li>
-<li>All maps and charts should display correctly</li>
-</ul></li>
-</ol>
-<p><strong>File naming:</strong> <code>LastName_FirstName_Assignment2.html</code> and <code>LastName_FirstName_Assignment2.qmd</code></p>
-<hr>
 
 
 </section>
