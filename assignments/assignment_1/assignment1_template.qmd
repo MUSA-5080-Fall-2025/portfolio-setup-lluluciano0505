@@ -14,40 +14,6 @@ execute:
   message: false
 ---
 
-# Assignment Overview
-
-## Scenario
-
-You are a data analyst for the **Missouri Department of Human Services**. The department is considering implementing an algorithmic system to identify communities that should receive priority for social service funding and outreach programs. Your supervisor has asked you to evaluate the quality and reliability of available census data to inform this decision.
-
-Drawing on our Week 2 discussion of algorithmic bias, you need to assess not just what the data shows, but how reliable it is and what communities might be affected by data quality issues.
-
-## Learning Objectives
-
-- Apply dplyr functions to real census data for policy analysis
-- Evaluate data quality using margins of error 
-- Connect technical analysis to algorithmic decision-making
-- Identify potential equity implications of data reliability issues
-- Create professional documentation for policy stakeholders
-
-## Submission Instructions
-
-**Submit by posting your updated portfolio link on Canvas.** Your assignment should be accessible at `your-portfolio-url/assignments/assignment_1/`
-
-Make sure to update your `_quarto.yml` navigation to include this assignment under an "Assignments" menu.
-
-# Part 1: Portfolio Integration
-
-Create this assignment in your portfolio repository under an `assignments/assignment_1/` folder structure. Update your navigation menu to include:
-
-```
-- text: Assignments
-  menu:
-    - href: assignments/assignment_1/assignment_1.qmd
-      text: "Assignment 1: Census Data Exploration"
-```
-If there is a special character like comma, you need use double quote mark so that the quarto can identify this as text
-
 # Setup
 
 ```{r setup}
@@ -64,22 +30,9 @@ Sys.getenv("CENSUS_API_KEY")
 my_state <- "Missouri"
 ```
 
-**State Selection:** I have chosen **Missouri** for this analysis because: major metropolitan areas (like St. Louis and Kansas City) with a large number of rural counties. This scenario can help to illustrate how data quality may vary between urban and rural areas, which is important for equitable policy decisions.
+I have chosen **Missouri** for this analysis because: major metropolitan areas (like St. Louis and Kansas City) with a large number of rural counties. This scenario can help to illustrate how data quality may vary between urban and rural areas, which is important for equitable policy decisions.
 
 # Part 2: County-Level Resource Assessment
-
-## 2.1 Data Retrieval
-
-**Your Task:** Use `get_acs()` to retrieve county-level data for your chosen state.
-
-**Requirements:**
-- Geography: county level
-- Variables: median household income (B19013_001) and total population (B01003_001)  
-- Year: 2022
-- Survey: acs5
-- Output format: wide
-
-**Hint:** Remember to give your variables descriptive names using the `variables = c(name = "code")` syntax.
 
 ```{r county-data}
 # Retrieve county-level ACS data for Missouri
@@ -106,17 +59,6 @@ head(county_data)
 
 ## 2.2 Data Quality Assessment
 
-**Your Task:** Calculate margin of error percentages and create reliability categories.
-
-**Requirements:**
-- Calculate MOE percentage: (margin of error / estimate) * 100
-- Create reliability categories:
-  - High Confidence: MOE < 5%
-  - Moderate Confidence: MOE 5-10%  
-  - Low Confidence: MOE > 10%
-- Create a flag for unreliable estimates (MOE > 10%)
-
-**Hint:** Use `mutate()` with `case_when()` for the categories.
 
 ```{r income-reliability}
 library(dplyr)
@@ -144,16 +86,6 @@ head(income_reliability)
 ```
 
 ## 2.3 High Uncertainty Counties
-
-**Your Task:** Identify the 5 counties with the highest MOE percentages.
-
-**Requirements:**
-- Sort by MOE percentage (highest first)
-- Select the top 5 counties
-- Display: county name, median income, margin of error, MOE percentage, reliability category
-- Format as a professional table using `kable()`
-
-**Hint:** Use `arrange()`, `slice()`, and `select()` functions.
 
 ```{r high-uncertainty}
 # Create table of top 5 counties by MOE percentage
@@ -184,11 +116,6 @@ The top five counties all have populations of around 40,000 to 60,000 or even fe
 
 # Part 3: Neighborhood-Level Analysis
 
-## 3.1 Focus Area Selection
-
-**Your Task:** Select 2-3 counties from your reliability analysis for detailed tract-level study.
-
-**Strategy:** Choose counties that represent different reliability levels (e.g., 1 high confidence, 1 moderate, 1 low confidence) to compare how data quality varies.
 
 ```{r select-counties}
 # Use filter() to select 2-3 counties from your county_reliability data
@@ -211,18 +138,9 @@ selected_counties <- income_reliability %>%
 selected_counties
 ```
 
-**Comment on the output:** I selected St. Louis, Buchanan, and Texas counties to represent high, moderate, and low data reliability contexts—urban, mid-sized, and rural areas, respectively. 
+I selected St. Louis, Buchanan, and Texas counties to represent high, moderate, and low data reliability contexts—urban, mid-sized, and rural areas, respectively. 
 
 ## 3.2 Tract-Level Demographics
-
-**Your Task:** Get demographic data for census tracts in your selected counties.
-
-**Requirements:**
-- Geography: tract level
-- Variables: white alone (B03002_003), Black/African American (B03002_004), Hispanic/Latino (B03002_012), total population (B03002_001)
-- Use the same state and year as before
-- Output format: wide
-- **Challenge:** You'll need county codes, not names. Look at the GEOID patterns in your county data for hints.
 
 ```{r tract-demographics}
 # Define your race/ethnicity variables with descriptive names
@@ -284,7 +202,6 @@ kable(
 
 ## 3.3 Demographic Analysis
 
-**Your Task:** Analyze the demographic patterns in your selected areas.
 
 ```{r demographic-analysis}
 # Find the tract with the highest percentage of Hispanic/Latino residents
@@ -323,14 +240,6 @@ kable(
 
 # Part 4: Comprehensive Data Quality Evaluation
 
-## 4.1 MOE Analysis for Demographic Variables
-
-**Your Task:** Examine margins of error for demographic variables to see if some communities have less reliable data.
-
-**Requirements:**
-- Calculate MOE percentages for each demographic variable
-- Flag tracts where any demographic variable has MOE > 15%
-- Create summary statistics
 
 ```{r demographic-moe}
 # Calculate MOE percentages for white, Black, and Hispanic variables
@@ -380,8 +289,6 @@ kable(county_summary, caption = "High-MOE tracts by county")
 
 ## 4.2 Pattern Analysis
 
-**Your Task:** Investigate whether data quality problems are randomly distributed or concentrated in certain types of communities.
-
 ```{r pattern-analysis}
 # Group tracts by whether they have high MOE issues
 # Calculate average characteristics for each group:
@@ -412,14 +319,6 @@ At this stage, it is difficult to draw substantive conclusions; what emerges mos
 # Part 5: Policy Recommendations
 
 ## 5.1 Analysis Integration and Professional Summary
-
-**Your Task:** Write an executive summary that integrates findings from all four analyses.
-
-**Executive Summary Requirements:**
-1. **Overall Pattern Identification**: What are the systematic patterns across all your analyses?
-2. **Equity Assessment**: Which communities face the greatest risk of algorithmic bias based on your findings?
-3. **Root Cause Analysis**: What underlying factors drive both data quality issues and bias risk?
-4. **Strategic Recommendations**: What should the Department implement to address these systematic issues?
 
 **Executive Summary:**
 
@@ -470,7 +369,6 @@ kable(
 
 **Key Recommendations:**
 
-**Your Task:** Use your analysis results to provide specific guidance to the department.
 
 1. **Counties suitable for immediate algorithmic implementation:** 
 Major metropolitan and other large counties with reliable data (High Confidence). For Missouri, these include places like St. Louis County, St. Louis City, Jackson County, St. Charles County, Clay County, Greene County, and a few others. These areas have MOEs well under 5% for key metrics. The department can confidently use the algorithm to drive decisions in these locales because any ranking or prioritization based on ACS data is grounded in fairly accurate information. 
@@ -512,17 +410,3 @@ c. County Selection: We intentionally picked one county for each reliability cat
 Margin of Error Interpretation: All MOEs discussed are at the 90% confidence level. This means there is a 10% chance the true value lies outside the given interval. If one prefers 95% confidence, margins would be wider. For simplicity, we stuck to ACS’s MOE as given.
 ACS Data Limitations: The ACS 5-year data, while comprehensive, has known limitations. Small or hard-to-reach populations (e.g., homeless individuals, transient laborers, undocumented immigrants) may be undercounted. Our analysis doesn’t correct for any undercount bias; it only measures sampling error (MOE).
 ---
-
-## Submission Checklist
-
-Before submitting your portfolio link on Canvas:
-
-- [ ] All code chunks run without errors
-- [ ] All "[Fill this in]" prompts have been completed
-- [ ] Tables are properly formatted and readable
-- [ ] Executive summary addresses all four required components
-- [ ] Portfolio navigation includes this assignment
-- [ ] Census API key is properly set 
-- [ ] Document renders correctly to HTML
-
-**Remember:** Submit your portfolio URL on Canvas, not the file itself. Your assignment should be accessible at `your-portfolio-url/assignments/assignment_1/your_file_name.html`

@@ -28,6 +28,8 @@ website:
             text: "Midterm Project"
           - href: assignments/midterm/Presentation_slides.qmd
             text: "Midterm PPT"
+          - href: assignments/assignment_2/Luciano_Lu_assignment4.qmd
+            text: "Assignment4"
 format:
   html:
     theme: cosmo
