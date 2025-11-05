@@ -23,7 +23,7 @@ website:
           - href: assignments/assignment_1/assignment1_template.qmd
             text: "Assignment 1: Census Data Exploration"
           - href: assignments/assignment_2/Luciano_Lu_assignment2.qmd
-            text: "Luciano_Lu_Assignment 2: Data Visualization with ggplots"
+            text: "Assignment 2: Data Visualization with ggplots"
           - href: assignments/midterm/appendix_nolog.qmd
             text: "Midterm Project"
           - href: assignments/midterm/Presentation_slides.qmd
