@@ -30,6 +30,8 @@ website:
             text: "Midterm PPT"
           - href: assignments/assignment_4/Luciano_Lu_assignment4.qmd
             text: "Assignment4"
+          - href: assignments/assignment_5/hw_5.qmd
+            text: "Assignment5"
 format:
   html:
     theme: cosmo
