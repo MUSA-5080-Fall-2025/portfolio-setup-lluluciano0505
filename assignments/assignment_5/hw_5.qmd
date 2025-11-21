@@ -96,10 +96,10 @@ glimpse(indego)
 ```
 ---
 
-# 1. Introduction  
-This report analyzes hourly bike share demand in Philadelphia using Indego data from Q2 2024.  
-The goal is to build and evaluate space-time predictive models, diagnose where and why errors occur,  
-and propose new features that improve forecasting performance for operational planning.
+# 1. Introduction 
+This report analyzes hourly bike share demand in Philadelphia using Indego data from Q2 2024. The goal is to build and evaluate space-time predictive models, diagnose where and why errors occur, and propose new features that improve forecasting performance for operational planning.
+
+
 
 ---
 
@@ -394,7 +394,7 @@ Weather significantly affects bike share demand! Let's get hourly weather for Ph
 
 ```{r get_weather}
 # Get weather from Philadelphia International Airport (KPHL)
-# This covers Q1 2025: January 1 - March 31
+# This covers Q2 2024: April 1 - June 30
 weather_data <- riem_measures(
   station = "PHL",  # Philadelphia International Airport
   date_start = "2024-04-01",
@@ -430,8 +430,8 @@ ggplot(weather_complete, aes(x = interval60, y = Temperature)) +
   geom_line(color = "#3182bd", alpha = 0.7) +
   geom_smooth(se = FALSE, color = "red") +
   labs(
-    title = "Philadelphia Temperature - Q1 2025",
-    subtitle = "Winter to early spring transition",
+    title = "Philadelphia Temperature - Q2 2024",
+    subtitle = "Spring to Summer transition",
     x = "Date",
     y = "Temperature (°F)"
   ) +
@@ -733,6 +733,9 @@ Moderate gain (R² ≈ 0.26). Captures stable differences between stations, but 
 Model 5 — Full Model
 Small additional improvement (R² ≈ 0.264). Interactions help only slightly; most predictability still comes from recent demand.
 
+In Q2 2024 specifically, the one-hour lag (`lag1Hour`) and 24-hour lag (`lag1day`) are by far the strongest predictors: hours with high recent demand almost always see high current demand. Temperature has a clear positive effect, while precipitation slightly suppresses ridership. By contrast, median income, racial composition, and transit share have tiny coefficients and do not materially change out-of-sample MAE, confirming that short-run dynamics matter much more than static neighborhood traits in this quarter.
+
+
 ## Comparison to Q1 2025
 
 Compared to the original Q1 2025 analysis, the best Q2 2024 model achieves a similar order of magnitude of error, with an MAE of about 0.71 trips per station-hour. The key difference is that Q2 demand is higher and more volatile: warm-weather leisure and discretionary trips introduce more noise than winter commute patterns, so the model must cope with sharper peaks and more irregular usage. As a result, the overall fit is comparable, but prediction is more challenging exactly in the busiest summer periods.
@@ -804,13 +807,46 @@ ggplot(mae_results, aes(x = reorder(Model, -MAE), y = MAE)) +
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
 ```
 
-Model 2 — the version with temporal lags — clearly performs best, with an MAE of about 0.71 trips, much lower than all other models.
-Model 1 performs reasonably (0.87), but the demographic model (Model 3) and fixed-effect models (Models 4–5) do not improve accuracy.
-Overall, recent demand is far more predictive than demographics, station effects, or rush-hour interactions.
+Model 2 — the version with temporal lags — clearly performs best, with an MAE of about 0.71 trips, much lower than all other models. Model 1 performs reasonably (0.87), but the demographic model (Model 3) and fixed-effect models (Models 4–5) do not improve accuracy.
 
-## Space-Time Error Analysis
 
-## Observed vs. Predicted
+## Compare Q2 2024 vs. Q1 2025
+
+```{r}
+mae_q2 <- mae_results 
+
+mae_q1 <- tibble(
+  Model = c(
+    "1. Time + Weather",
+    "2. + Temporal Lags",
+    "3. + Demographics",
+    "4. + Station FE",
+    "5. + Rush Hour Interaction"
+  ),
+  MAE_Q1_2025 = c(0.60, 0.50, 0.74, 0.73, 0.73)
+)
+
+
+mae_compare <- mae_q1 %>%
+  left_join(mae_q2, by = "Model") %>%
+  rename(MAE_Q2_2024 = MAE)
+
+kable(
+  mae_compare,
+  digits = 2,
+  caption = "MAE comparison: Q1 2025 vs Q2 2024",
+  col.names = c("Model", "MAE (Q1 2025)", "MAE (Q2 2024)")
+) %>%
+  kable_styling(bootstrap_options = c("striped", "hover"))
+
+```
+
+
+Across all five models, Q2 2024 has consistently **lower MAE** than Q1 2025.  
+For the best-performing model (Model 2, with temporal lags), MAE drops from **0.71** trips per station-hour in Q1 to **0.50** in Q2. The simple time–weather baseline also improves from **0.87** to **0.60**, while the more complex models (3–5) remain worse than the lag model in both quarters.
+
+
+## Space-Time Error Analysis: Observed vs. Predicted
 
 Let's use our best model (Model 2) for error analysis.
 
@@ -940,8 +976,6 @@ p2 <- ggplot() +
   ))
 
 
-
-
 # Map 1: Prediction Errors
 p1 <- ggplot() +
   geom_sf(data = philly_census, fill = "grey95", color = "white", size = 0.1) +
@@ -1009,7 +1043,6 @@ grid.arrange(
   p1, p2,
   ncol = 2
   )
-p1
 ```
 
 Prediction errors are highest in Center City and University City, the two areas with the strongest and most volatile bike activity. These stations experience sharp swings in demand—commuters, tourists, and university traffic—making them harder to model with simple hourly features. In contrast, outlying residential neighborhoods show lower errors because their usage patterns are more stable and predictable. The close alignment between “high average demand” and “high error” suggests that variability, rather than low volume, drives most of the model’s difficulty.
@@ -1042,7 +1075,55 @@ ggplot(temporal_errors, aes(x = time_of_day, y = MAE, fill = day_type)) +
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
 ```
 
-Errors peak during the PM rush, especially on weekdays, which reflects the high volatility of evening travel. Mid-day and AM rush also show elevated errors, while overnight hours are the most predictable. Overall, the model struggles most during periods with heavy and irregular movement.
+
+```{r}
+weekly_errors <- test %>%
+  group_by(week, weekend) %>%
+  summarise(
+    MAE        = mean(abs_error, na.rm = TRUE),
+    mean_error = mean(error,     na.rm = TRUE),
+    .groups    = "drop"
+  ) %>%
+  mutate(
+    day_type = ifelse(weekend == 1, "Weekend", "Weekday"),
+    week = factor(week)
+  )
+
+p_week_mae <- ggplot(weekly_errors,
+                     aes(x = week, y = MAE, fill = day_type)) +
+  geom_col(position = "dodge") +
+  scale_fill_manual(values = c("Weekday" = "#08519c",
+                               "Weekend" = "#6baed6")) +
+  labs(
+    title = "Weekly Pattern in Prediction Errors",
+    subtitle = "Mean Absolute Error by week and day type (test set)",
+    x = "Week of year",
+    y = "Mean Absolute Error (trips)",
+    fill = "Day Type"
+  ) +
+  plotTheme
+
+p_week_bias <- ggplot(weekly_errors,
+                      aes(x = week, y = mean_error, fill = day_type)) +
+  geom_col(position = "dodge") +
+  geom_hline(yintercept = 0, linetype = "dashed") +
+  scale_fill_manual(values = c("Weekday" = "#08519c",
+                               "Weekend" = "#6baed6")) +
+  labs(
+    title = "Weekly Under- / Over-Prediction",
+    subtitle = "Mean signed error by week and day type (test set)",
+    x = "Week of year",
+    y = "Mean Error (trips)",
+    fill = "Day Type"
+  ) +
+  plotTheme
+
+gridExtra::grid.arrange(p_week_mae, p_week_bias, ncol = 2)
+
+
+```
+
+Across the four test weeks (23–26), prediction errors are fairly stable: weekday and weekend MAE stay in the 0.7–0.8 trip range, with only a slight peak in week 24. Bias is small in most weeks, but weeks 23–24 show mild over-prediction, especially on weekdays. In contrast, week 25 exhibits noticeable under-prediction on weekends, suggesting an unusually strong spike in weekend demand that the model did not anticipate. By week 26, signed errors return close to zero, indicating that systematic under/over-prediction does not persist over time.
 
 ## Errors and Demographics
 
@@ -1080,20 +1161,16 @@ p3 <- ggplot(station_errors_demo, aes(x = Percent_White, y = MAE)) +
 grid.arrange(p1, p2, p3, ncol = 2)
 ```
 
-Errors increase slightly in higher-income and whiter neighborhoods, where stations tend to be busier and more variable. In contrast, stations with higher transit-usage rates show lower errors, suggesting more stable ridership patterns. These relationships are modest but indicate that variability—not disadvantage—drives most prediction difficulty.
+Station–level errors are only weakly related to neighborhood demographics. MAE tends to be slightly higher in tracts with higher median income and a larger share of white residents, while it declines in tracts where a higher share of commuters take transit. In other words, the model struggles a bit more in richer, whiter areas and performs better in transit-oriented neighborhoods.
+
+These differences appear modest and are driven mainly by higher and more volatile demand at busy, centrally located stations, rather than systematic under-performance in disadvantaged communities, though any deployment should still monitor errors by neighborhood over time.
 
 
 # 6. Feature Engineering & Model Improvement  
 
 ## Create New Features
 
-We added three additional predictors to the baseline temporal–lag model:
-
-1. Perfect-weather indicator: a dummy for hours with temperatures between 60–75°F and no precipitation.
-
-2. Same-hour-last-week demand (t–168 lag): trips at the same station exactly one week earlier.
-
-3. Rolling 7-day average demand: a smoothed measure of medium-term demand trends at each station.
+The choice of new features is guided directly by the error analysis in Section 5. Spatially and temporally, the model struggled most during warm, high-demand peaks in Center City and University City – especially on PM rush hours and busy weekends – and we also saw clear weekly repetition in the demand patterns. To target these misspecifications, I focus on features that (i) sharpen the model’s sensitivity to “perfect” biking weather and (ii) capture medium-run weekly structure beyond the short-run lags already in Model 2.
 
 ```{r}
 
@@ -1142,6 +1219,7 @@ test <- test %>%
 
 ```
 
+
 ## Improved Model
 
 ```{r}
@@ -1165,6 +1243,7 @@ model_improved <- lm(
 summary(model_improved)
 ```
 ## Compare Improved Model to Baseline Model 2
+
 ```{r}
 # baseline Model 2 predictions
 pred_base <- predict(model2, newdata = test_improved)
@@ -1184,9 +1263,8 @@ The improved model is built by augmenting Model 2 (time, weather, and short-run 
 On the held-out test set, however, performance does not improve:
 the baseline Model 2 achieves an MAE of 0.72 trips, while the enhanced model’s MAE rises slightly to 0.73 trips.
 
-This suggests that, for Q2 2024, the new features are largely redundant with the existing lag structure.
-The rolling 7-day mean and the t–168 lag are highly correlated with the shorter lags, so they add parameters without much new signal, likely leading to mild overfitting.
-In other words, recent demand (within the last few hours) already captures most of the predictable structure, and medium-term trend features do not buy much additional accuracy in this relatively short three-month window.
+Breaking the errors down by station and time of day confirms that there is no clear subset where the new features deliver large gains: MAE by time period and by station changes only marginally, and the ranking of “easy” vs. “hard” stations is essentially unchanged. In other words, the extra features slightly reshuffle individual residuals but do not systematically fix the large errors identified in the earlier analysis..
+
 
 ## Poisson Model
 
