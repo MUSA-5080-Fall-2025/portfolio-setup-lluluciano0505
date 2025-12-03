@@ -234,7 +234,7 @@ kable(top_stations,
 
 We'll get census tract data to add demographic context to our stations.
 
-```{r load_census}
+```{r philly-census, include=FALSE}
 # Get Philadelphia census tracts
 philly_census <- get_acs(
   geography = "tract",
