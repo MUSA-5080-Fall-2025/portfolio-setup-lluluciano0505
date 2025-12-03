@@ -1,6 +1,5 @@
 ---
 title: "Spatial Predictive Modeling – Sanitation 311 Requests"
-subtitle: "MUSA 5080 – Fall 2025"
 author: "Jingqi Lu"
 date: today
 format:
@@ -67,10 +66,9 @@ sanitation_sf <- sanitation_raw %>%
 
 To analyze spatial variation in complaint intensity, I construct a 500 m × 500 m fishnet grid over Chicago, aggregate sanitation violations to each cell, and map the resulting count distribution.
 
-#### Part 1: Data Loading & Exploration
+### Part 1: Data Loading & Exploration
 
 In this part, I load the raw sanitation 311 service request data and the Chicago city boundary, then filter the requests to 2017 incidents with valid latitude–longitude coordinates. Both layers are projected into a common planar CRS (ESRI:102271) so that distances are measured in meters and are suitable for subsequent spatial analysis. The exploratory point map shows that sanitation code violations are far from uniformly distributed: they cluster along central, south, and west corridors of the city, while the North Side exhibits lighter, more scattered activity. This initial pattern already suggests strong spatial concentration of complaints and motivates a grid-based analysis of variation in complaint intensity across the city.
-
 
 ```{r}
 # Load Chicago boundary for context
@@ -104,9 +102,9 @@ cat("311 sanitation records for 2017:", nrow(sanitation_sf), "\n")
 
 Violations cluster densely along the city’s central and southern corridors, especially on the South and West Sides. The North Side shows lighter, more scattered activity. Overall, incidents follow residential density and older housing patterns, revealing clear spatial concentration rather than uniform distribution.
 
-#### Part 2: Fishnet Grid Creation
+### Part 2: Fishnet Grid Creation
 
-Here I construct a 500 m × 500 m fishnet grid over Chicago, intersect it with the city boundary, and aggregate sanitation violations to each grid cell. This produces a count surface of sanitation complaints that standardizes the spatial unit of analysis across the entire city. 
+Here I construct a 500 m × 500 m fishnet grid over Chicago, intersect it with the city boundary, and aggregate sanitation violations to each grid cell. This produces a count surface of sanitation complaints that standardizes the spatial unit of analysis across the entire city.
 
 ```{r}
 fishnet <- st_make_grid(
@@ -159,9 +157,9 @@ ggplot() +
   )
 ```
 
-#### Part 3: Spatial Features
+### Part 3: Spatial Features
 
-To capture local spatial context, I derive two key features for each grid cell: the mean distance to the three nearest sanitation events (nn_meanDist) and the distance to the nearest High–High hotspot centroid (dist_to_hotspot). Smaller values of these features indicate tighter clustering of complaints around the cell or closer proximity to a major hotspot. 
+To capture local spatial context, I derive two key features for each grid cell: the mean distance to the three nearest sanitation events (nn_meanDist) and the distance to the nearest High–High hotspot centroid (dist_to_hotspot). Smaller values of these features indicate tighter clustering of complaints around the cell or closer proximity to a major hotspot.
 
 ```{r}
 fishnet_centroids <- st_centroid(fishnet)
@@ -239,9 +237,9 @@ cat("Calculated distance to nearest High-High cluster\n")
 
 ```
 
-#### Part 4: Count Regression Models
+### Part 4: Count Regression Models
 
-In this part, I fit Poisson and Negative Binomial count regression models to explain variation in sanitation complaint counts per grid cell using the two spatial features. 
+In this part, I fit Poisson and Negative Binomial count regression models to explain variation in sanitation complaint counts per grid cell using the two spatial features.
 
 ```{r}
 fishnet_model <- fishnet %>%
@@ -291,9 +289,9 @@ cat("NegBin  AIC:", round(AIC(model_nb), 2), "\n")
 
 The Poisson model showed clear overdispersion (dispersion = 4.54 \> 1.5). The Negative Binomial model substantially improved fit (AIC = 11 212 vs 14 422). Both predictors were highly significant and negative: greater distance to nearby violations or to cluster centers corresponds to fewer sanitation code violations. This pattern indicates spatial clustering of violations within central and southern neighborhoods.
 
-#### Part 5: Spatial Cross-Validation (2017)
+### Part 5: Spatial Cross-Validation (2017)
 
-To evaluate spatial generalization, I implement a Leave-One-District-Out (LOGO) cross-validation using Chicago’s 22 police districts as spatial folds. 
+To evaluate spatial generalization, I implement a Leave-One-District-Out (LOGO) cross-validation using Chicago’s 22 police districts as spatial folds.
 
 ```{r}
 policeDistricts <- suppressMessages(
@@ -380,7 +378,7 @@ Across all 22 folds, the model achieved an average Mean Absolute Error (MAE) of 
 
 Overall, the LOGO cross-validation confirms that the model captures meaningful spatial patterns and maintains moderate predictive accuracy across the city.
 
-#### Part 6: Model Evaluation
+### Part 6: Model Evaluation
 
 ```{r}
 fishnet_model$pred_2017 <- predict(model_nb, newdata = fishnet_model, type = "response")
@@ -474,7 +472,7 @@ Red cells (under-prediction): locations where observed violations exceeded predi
 
 Overall assessment: The Negative Binomial model improves predictive performance over both Poisson and KDE approaches. It handles overdispersion and learns spatial correlates of sanitation activity, making it more robust for forecasting future 311 requests.
 
-#### CHALLENGE TASK: Temporal Validation (2018)
+### CHALLENGE TASK: Temporal Validation (2018)
 
 ```{r}
 crime_2018 <- read_csv("https://data.cityofchicago.org/resource/3i3m-jwuy.csv")
@@ -551,14 +549,12 @@ This project builds a spatial predictive model of sanitation-related 311 service
 
 Spatial clustering and model diagnostics show that these urban service complaints are not randomly distributed. Instead, they exhibit strong spatial dependence—particularly along the South and West Sides—reflecting the persistence of neighborhood-level environmental and socioeconomic inequalities.
 
-------------------------------------------------------------------------
 
 ### 1. Spatial Clustering
 
-Exploratory mapping revealed clear spatial concentrations of sanitation violations. Local Moran’s I confirmed statistically significant **High-High clusters** (hotspots) in central-west and south-side neighborhoods, while **Low-Low clusters** occurred in more peripheral or affluent areas.\
+Exploratory mapping revealed clear spatial concentrations of sanitation violations. Local Moran’s I confirmed statistically significant High-High clusters (hotspots) in central-west and south-side neighborhoods, while Low-Low clusters occurred in more peripheral or affluent areas.\
 This indicates that sanitation complaints follow patterns of older housing stock, population turnover, and varying municipal service responsiveness.
 
-------------------------------------------------------------------------
 
 ### 2. Count Regression Modeling
 
@@ -567,23 +563,21 @@ Both Poisson and Negative Binomial (NB) count models were fit to predict the num
 -   **Mean distance to nearest 3 sanitation events (nn_meanDist)**
 -   **Distance to the nearest high-high cluster centroid (dist_to_hotspot)**
 
-The Poisson model exhibited **overdispersion** (dispersion = 4.54 ≫ 1.5), meaning that the variance of counts greatly exceeded the mean.\
+The Poisson model exhibited overdispersion (dispersion = 4.54 ≫ 1.5), meaning that the variance of counts greatly exceeded the mean.\
 The NB model corrected this issue and achieved a much better fit (AIC = 11 212 vs 14 422 for Poisson), validating the choice of a variance-adjusted count specification.\
 Both predictors were significantly negative, showing that proximity to existing violations and hotspots strongly increases expected complaint frequency.
 
-------------------------------------------------------------------------
 
 ### 3. Spatial Cross-Validation (2017)
 
-A **Leave-One-District-Out (LOGO)** cross-validation using Chicago’s 22 police districts assessed spatial generalizability.\
-The model achieved **Mean MAE = 4.67** and **Mean RMSE = 7.74**, confirming moderate predictive power in unseen areas.\
+A Leave-One-District-Out (LOGO) cross-validation using Chicago’s 22 police districts assessed spatial generalizability.\
+The model achieved Mean MAE = 4.67 and Mean RMSE = 7.74, confirming moderate predictive power in unseen areas.\
 Prediction errors were larger in dense downtown and inner-south districts, highlighting the spatial heterogeneity of urban sanitation behavior.
 
-------------------------------------------------------------------------
 
 ### 4. Temporal Validation (2018)
 
-Applying the 2017 NB model to 2018 sanitation data yielded **MAE = 5.05** and **RMSE = 7.84**, outperforming a non-parametric **KDE baseline** (MAE = 8.67, RMSE = 12.55).\
+Applying the 2017 NB model to 2018 sanitation data yielded MAE = 5.05 and RMSE = 7.84, outperforming a non-parametric KDE baseline (MAE = 8.67, RMSE = 12.55).\
 The model successfully generalized across years, indicating that neighborhood-level structural factors—rather than year-specific policy noise—drive much of the spatial pattern in 311 sanitation requests.
 
 The 2018 error map showed: - **Blue areas (overprediction)** around southern and western peripheries\
@@ -591,17 +585,15 @@ The 2018 error map showed: - **Blue areas (overprediction)** around southern and
 
 These differences likely stem from unmodeled local dynamics such as inspection intensity, redevelopment, or seasonal population change.
 
-------------------------------------------------------------------------
 
 ### 5. Challenge Task: Cross-Domain Validation (2018 Burglary)
 
-The 2017 sanitation model was tested on **2018 burglary (forcible entry)** events to evaluate cross-domain transferability.\
-Results showed systematic **overprediction** across most grid cells, meaning that the model assumed crime would occur with similar spatial intensity as sanitation violations.\
+The 2017 sanitation model was tested on 2018 burglary (forcible entry) events to evaluate cross-domain transferability.\
+Results showed systematic overprediction across most grid cells, meaning that the model assumed crime would occur with similar spatial intensity as sanitation violations.\
 This demonstrates that while spatial autocorrelation structures are similar across urban phenomena, the underlying generative mechanisms (social, behavioral, or policing factors) differ substantially.
 
 Such overprediction underscores the domain specificity of spatial count processes and the importance of incorporating domain-relevant variables when extending predictive models to new phenomena.
 
-------------------------------------------------------------------------
 
 ### 6. Interpretation
 
@@ -610,7 +602,6 @@ Such overprediction underscores the domain specificity of spatial count processe
 3.  **Temporal generalization is feasible:** Structural neighborhood effects remain stable across years.\
 4.  **Cross-domain generalization is limited:** Models trained on sanitation data poorly capture crime patterns, revealing that social drivers differ even when spatial clustering appears similar.
 
-------------------------------------------------------------------------
 
 Spatially explicit predictive modeling of 311 sanitation complaints can help city agencies prioritize inspection and maintenance resources more efficiently.\
 However, models must remain adaptive—incorporating updated data, temporal shifts, and behavioral heterogeneity—to avoid reinforcing historical inequalities in service delivery.\
