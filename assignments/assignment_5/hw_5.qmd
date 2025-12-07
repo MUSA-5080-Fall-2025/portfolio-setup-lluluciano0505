@@ -4,7 +4,8 @@ author: "Jingqi Lu"
 date: today
 format:
   html:
-    code-fold: show
+    number-sections: false
+    code-fold: true
     code-tools: true
     toc: true
     toc-depth: 3
@@ -16,6 +17,7 @@ execute:
   warning: false
   message: false
 ---
+
 # Setup
 
 ```{r setup, include=FALSE}
@@ -55,6 +57,7 @@ options(scipen = 999)
 ```
 
 ## Define Themes
+
 These themes will be used for consistent styling of plots.
 
 ```{r themes}
@@ -101,14 +104,14 @@ indego <- read_csv("data/indego-trips-2024-q2.csv")
 # Quick look at the data
 glimpse(indego)
 ```
----
 
-# 1. Introduction 
+------------------------------------------------------------------------
+
+# 1. Introduction
+
 This report analyzes hourly bike share demand in Philadelphia using Indego data from Q2 2024. The goal is to build and evaluate space-time predictive models, diagnose where and why errors occur, and propose new features that improve forecasting performance for operational planning.
 
-
-
----
+------------------------------------------------------------------------
 
 ## 1.1 Examine the Data Structure
 
@@ -164,7 +167,7 @@ indego <- indego %>%
 head(indego %>% select(start_datetime, interval60, week, dotw, hour, weekend))
 ```
 
-# 2. Exploratory Data Analysis  
+# 2. Exploratory Data Analysis
 
 ## 2.1 Trips Over Time
 
@@ -186,9 +189,10 @@ ggplot(daily_trips, aes(x = date, y = trips)) +
   ) +
   plotTheme
 ```
+
 Daily trip volumes rise sharply from early April into mid-June, consistent with the seasonal transition into warmer weather. The series remains noisy—weekends, rain events, and holiday fluctuations introduce large day-to-day swings—but the overall trend is a steady climb toward peak summer demand. Compared to Q1 2025, the level is higher and the pattern is less stable, reflecting how warmer months attract more discretionary, non-commuting trips.
 
-##2.2  Hourly Patterns
+##2.2 Hourly Patterns
 
 ```{r hourly_patterns}
 # Average trips by hour and day type
@@ -226,7 +230,6 @@ kable(top_stations,
       format.args = list(big.mark = ",")) %>%
   kable_styling(bootstrap_options = c("striped", "hover"))
 ```
-
 
 # 3. Get Philadelphia Spatial Context
 
@@ -375,7 +378,6 @@ Most Indego stations successfully join to their surrounding census tract, but a 
 
 We need to decide what to do with the non-residential bike share stations. For this example, we are going to remove them -- this is not necessarily the right way to do things always, but for the sake of simplicity, we are narrowing our scope to only stations in residential neighborhoods. We might opt to create a separate model for non-residential stations..
 
-
 ```{r}
 # Identify which stations to keep
 valid_stations <- stations_census %>%
@@ -392,8 +394,6 @@ indego_census <- indego %>%
     by = "start_station"
   )
 ```
-
-
 
 ## 3.5 Get Weather Data
 
@@ -509,6 +509,7 @@ study_panel <- study_panel %>%
 # Verify we have complete panel
 cat("Complete panel rows:", format(nrow(study_panel), big.mark = ","), "\n")
 ```
+
 ## 3.9 Add Time Features
 
 ```{r add_time_features}
@@ -538,7 +539,7 @@ summary(study_panel %>% select(Trip_Count, Temperature, Precipitation))
 
 The key innovation for space-time prediction: **past demand predicts future demand**.
 
-If there were 15 bike trips from Station A at 8:00 AM, there will probably be ~15 trips at 9:00 AM. We can use this temporal persistence to improve predictions.
+If there were 15 bike trips from Station A at 8:00 AM, there will probably be \~15 trips at 9:00 AM. We can use this temporal persistence to improve predictions.
 
 ```{r create_lags}
 # Sort by station and time
@@ -640,7 +641,6 @@ cat("Testing date range:", min(test$date), "to", max(test$date), "\n")
 
 ```
 
-
 # 4. Build Predictive Models
 
 We'll build 5 models with increasing complexity to see what improves predictions.
@@ -664,7 +664,6 @@ model1 <- lm(
 
 summary(model1)
 ```
-
 
 ## 4.2 Model 2: Add Temporal Lags
 
@@ -707,7 +706,6 @@ cat("Model 4 R-squared:", summary(model4)$r.squared, "\n")
 cat("Model 4 Adj R-squared:", summary(model4)$adj.r.squared, "\n")
 ```
 
-
 ## 4.5 Model 5: Add Rush Hour Interaction
 
 ```{r model5}
@@ -725,29 +723,22 @@ cat("Model 5 Adj R-squared:", summary(model5)$adj.r.squared, "\n")
 ```
 
 ## 4.6 Model Performance
-Model 1 — Time + Weather
-Explains only about 11% of variation. Captures basic hourly/weekly patterns and weather, but predictions are weak.
 
-Model 2 — + Temporal Lags
-Big improvement: R² jumps to 0.34. The 1-hour lag is the strongest predictor. Demand is highly path-dependent.
+Model 1 — Time + Weather Explains only about 11% of variation. Captures basic hourly/weekly patterns and weather, but predictions are weak.
 
-Model 3 — + Demographics
-No real improvement. Demographic variables add little to short-run hourly prediction.
+Model 2 — + Temporal Lags Big improvement: R² jumps to 0.34. The 1-hour lag is the strongest predictor. Demand is highly path-dependent.
 
-Model 4 — + Station Fixed Effects
-Moderate gain (R² ≈ 0.26). Captures stable differences between stations, but less important than lag effects.
+Model 3 — + Demographics No real improvement. Demographic variables add little to short-run hourly prediction.
 
-Model 5 — Full Model
-Small additional improvement (R² ≈ 0.264). Interactions help only slightly; most predictability still comes from recent demand.
+Model 4 — + Station Fixed Effects Moderate gain (R² ≈ 0.26). Captures stable differences between stations, but less important than lag effects.
+
+Model 5 — Full Model Small additional improvement (R² ≈ 0.264). Interactions help only slightly; most predictability still comes from recent demand.
 
 In Q2 2024 specifically, the one-hour lag (`lag1Hour`) and 24-hour lag (`lag1day`) are by far the strongest predictors: hours with high recent demand almost always see high current demand. Temperature has a clear positive effect, while precipitation slightly suppresses ridership. By contrast, median income, racial composition, and transit share have tiny coefficients and do not materially change out-of-sample MAE, confirming that short-run dynamics matter much more than static neighborhood traits in this quarter.
-
 
 ## 4.7 Comparison to Q1 2025
 
 Compared to the original Q1 2025 analysis, the best Q2 2024 model achieves a similar order of magnitude of error, with an MAE of about 0.71 trips per station-hour. The key difference is that Q2 demand is higher and more volatile: warm-weather leisure and discretionary trips introduce more noise than winter commute patterns, so the model must cope with sharper peaks and more irregular usage. As a result, the overall fit is comparable, but prediction is more challenging exactly in the busiest summer periods.
-
-
 
 # 5.Model Evaluation
 
@@ -797,7 +788,6 @@ kable(mae_results,
   kable_styling(bootstrap_options = c("striped", "hover"))
 ```
 
-
 ## 5.2 Visualize Model Comparison
 
 ```{r compare_models}
@@ -815,7 +805,6 @@ ggplot(mae_results, aes(x = reorder(Model, -MAE), y = MAE)) +
 ```
 
 Model 2 — the version with temporal lags — clearly performs best, with an MAE of about 0.71 trips, much lower than all other models. Model 1 performs reasonably (0.87), but the demographic model (Model 3) and fixed-effect models (Models 4–5) do not improve accuracy.
-
 
 ## 5.3 Compare Q2 2024 vs. Q1 2025
 
@@ -848,10 +837,8 @@ kable(
 
 ```
 
-
-Across all five models, Q2 2024 has consistently **lower MAE** than Q1 2025.  
+Across all five models, Q2 2024 has consistently **lower MAE** than Q1 2025.\
 For the best-performing model (Model 2, with temporal lags), MAE drops from **0.71** trips per station-hour in Q1 to **0.50** in Q2. The simple time–weather baseline also improves from **0.87** to **0.60**, while the more complex models (3–5) remain worse than the lag model in both quarters.
-
 
 ## 5.4 Space-Time Error Analysis: Observed vs. Predicted
 
@@ -886,7 +873,6 @@ ggplot(test, aes(x = Trip_Count, y = pred2)) +
   ) +
   plotTheme
 ```
-
 
 ## 5.5 Spatial Error Patterns
 
@@ -1082,7 +1068,6 @@ ggplot(temporal_errors, aes(x = time_of_day, y = MAE, fill = day_type)) +
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
 ```
 
-
 ```{r}
 weekly_errors <- test %>%
   group_by(week, weekend) %>%
@@ -1172,8 +1157,7 @@ Station–level errors are only weakly related to neighborhood demographics. MAE
 
 These differences appear modest and are driven mainly by higher and more volatile demand at busy, centrally located stations, rather than systematic under-performance in disadvantaged communities, though any deployment should still monitor errors by neighborhood over time.
 
-
-# 6. Feature Engineering & Model Improvement  
+# 6. Feature Engineering & Model Improvement
 
 ## 6.1 Create New Features
 
@@ -1226,7 +1210,6 @@ test <- test %>%
 
 ```
 
-
 ## 6.2 Improved Model
 
 ```{r}
@@ -1249,6 +1232,7 @@ model_improved <- lm(
 
 summary(model_improved)
 ```
+
 ## 6.3 Compare Improved Model to Baseline Model 2
 
 ```{r}
@@ -1266,12 +1250,10 @@ mae_improved <- mean(abs(test_improved$Trip_Count[valid_idx] - pred_improved[val
 cat("Model 2 MAE (baseline): ", round(mae_base, 3), "\n")
 cat("Improved Model MAE:     ", round(mae_improved, 3), "\n")
 ```
-The improved model is built by augmenting Model 2 (time, weather, and short-run lags) with the three new features.
-On the held-out test set, however, performance does not improve:
-the baseline Model 2 achieves an MAE of 0.72 trips, while the enhanced model’s MAE rises slightly to 0.73 trips.
+
+The improved model is built by augmenting Model 2 (time, weather, and short-run lags) with the three new features. On the held-out test set, however, performance does not improve: the baseline Model 2 achieves an MAE of 0.72 trips, while the enhanced model’s MAE rises slightly to 0.73 trips.
 
 Breaking the errors down by station and time of day confirms that there is no clear subset where the new features deliver large gains: MAE by time period and by station changes only marginally, and the ranking of “easy” vs. “hard” stations is essentially unchanged. In other words, the extra features slightly reshuffle individual residuals but do not systematically fix the large errors identified in the earlier analysis..
-
 
 ## 6.4 Poisson Model
 
@@ -1298,17 +1280,21 @@ I also estimated a Poisson regression using the same feature set as the improved
 # 7. Brief Report Summary
 
 ## Quarter and Motivation
+
 This project uses **Q2 2024** Indego data (April–June). This quarter captures the transition into Philadelphia’s warm season, when bike share demand is higher, more volatile, and more influenced by discretionary and leisure trips than in winter. It therefore provides a stronger test of short-run demand prediction.
 
 ## Model Comparison
+
 I estimate five nested OLS models. A simple time + weather model (Model 1) explains only about 11% of variation and yields an MAE of **0.87** trips. Adding temporal lag terms (Model 2) is crucial: R² rises to about **0.34** and MAE falls to **0.71**, making it the best-performing baseline. Demographics, station fixed effects, and rush-hour interactions (Models 3–5) increase model complexity but do not improve out-of-sample MAE. Recent demand at each station is far more predictive than static neighborhood characteristics.
 
 ## Error Analysis
+
 Spatially, errors are highest at busy stations in Center City and University City, where commuter, tourist, and university traffic create sharp, irregular peaks. Peripheral residential stations are more predictable. Temporally, weekday PM peaks show the largest errors, while overnight hours are very stable. Demographically, errors are slightly higher in higher-income and whiter tracts, mostly because those areas host the busiest and most volatile stations.
 
 ## New Features and Poisson Model
+
 To improve Model 2, I add three features: a perfect-weather indicator, a same-hour-last-week lag, and a rolling 7-day average of demand. However, the enhanced model’s MAE rises slightly to **0.73**, and a Poisson count model with the same features also achieves about **0.73**. These results suggest that the short-run lag structure already captures most usable signal, and the additional temporal trend features mainly add noise in this three-month sample.
 
 ## Critical Reflection
-An MAE of roughly **0.7 trips per station-hour** is operationally useful for high-level planning and rebalancing strategy, but not sufficient for fully automated real-time control, especially during volatile PM peaks in the downtown core. Errors do not appear to systematically disadvantage low-income or high-transit neighborhoods, but any deployment should monitor error patterns by area and enforce minimum service standards in equity-priority communities. The current model ignores events, disruptions, and spatial spillovers; with more time and data, I would incorporate event calendars, network structure, and more flexible model families to better capture the complex dynamics of Philadelphia’s bike share system.
 
+An MAE of roughly **0.7 trips per station-hour** is operationally useful for high-level planning and rebalancing strategy, but not sufficient for fully automated real-time control, especially during volatile PM peaks in the downtown core. Errors do not appear to systematically disadvantage low-income or high-transit neighborhoods, but any deployment should monitor error patterns by area and enforce minimum service standards in equity-priority communities. The current model ignores events, disruptions, and spatial spillovers; with more time and data, I would incorporate event calendars, network structure, and more flexible model families to better capture the complex dynamics of Philadelphia’s bike share system.

@@ -32,6 +32,10 @@ website:
             text: "Assignment4"
           - href: assignments/assignment_5/hw_5.qmd
             text: "Assignment5"
+          - href: assignments/Final/FINAL_1.qmd
+            text: "Final Project: Fire Alarms Analysis"
+          - href: assignments/Final/presentation/Final_Presentation.qmd
+            text: "Final PPT"
 format:
   html:
     theme: cosmo
